@@ -2,16 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { subscribeWithAuth } from "@/lib/supabase/realtime";
 
 export type Message = { id: number; sender_id: string; body: string; created_at: string };
 
-const POLL_MS = 4000;
+// Realtime 이 끊겼을 때를 위한 보조 새로고침
+const FALLBACK_POLL_MS = 15000;
 
 function timeLabel(iso: string) {
   return new Date(iso).toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit" });
 }
 
-// 메시지 전송·조회는 브라우저에서 바로 (RLS 가 참여자만 허용), 새 메시지는 짧은 간격 폴링
+// id 기준으로 합치고 정렬 (Realtime·전송 응답·폴링 어느 쪽으로 와도 한 번만 표시)
+function merge(prev: Message[], incoming: Message[]) {
+  const byId = new Map(prev.map((m) => [m.id, m]));
+  for (const m of incoming) byId.set(m.id, m);
+  return [...byId.values()].sort((a, b) => a.id - b.id);
+}
+
+// 메시지 전송·조회는 브라우저에서 바로 (RLS 가 참여자만 허용), 새 메시지는 Supabase Realtime 으로 즉시 받음
 export function ChatRoom({ threadId, userId, initialMessages }: { threadId: number; userId: string; initialMessages: Message[] }) {
   const [messages, setMessages] = useState(initialMessages);
   const [body, setBody] = useState("");
@@ -21,14 +30,37 @@ export function ChatRoom({ threadId, userId, initialMessages }: { threadId: numb
   const lastIdRef = useRef(initialMessages.at(-1)?.id ?? 0);
 
   const append = (incoming: Message[]) => {
-    const fresh = incoming.filter((m) => m.id > lastIdRef.current);
-    if (!fresh.length) return;
-    lastIdRef.current = fresh.at(-1)!.id;
-    setMessages((prev) => [...prev, ...fresh]);
+    if (!incoming.length) return;
+    lastIdRef.current = Math.max(lastIdRef.current, ...incoming.map((m) => m.id));
+    setMessages((prev) => merge(prev, incoming));
   };
 
   useEffect(() => {
     const supabase = createClient();
+    // 보고 있는 대화방의 DM 알림은 바로 읽음 처리
+    // (Supabase 쿼리는 await 해야 실제로 실행됨)
+    const markRead = async () => {
+      await supabase.from("notifications").update({ is_read: true }).eq("user_id", userId).eq("type", "new_dm").eq("target_id", threadId);
+    };
+
+    const channelPromise = subscribeWithAuth(
+      supabase,
+      () =>
+        supabase
+          // 토픽 이름을 매번 다르게: 같은 이름이면 이전 채널의 leave 가 새 구독까지 끊을 수 있음
+          .channel(`dm:${threadId}:${crypto.randomUUID()}`)
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "dm_messages", filter: `thread_id=eq.${threadId}` },
+            (payload) => {
+              const m = payload.new as Message & { thread_id: number };
+              append([{ id: m.id, sender_id: m.sender_id, body: m.body, created_at: m.created_at }]);
+              if (m.sender_id !== userId) markRead();
+            },
+          ),
+      "dm",
+    );
+
     const timer = setInterval(async () => {
       const { data } = await supabase
         .from("dm_messages")
@@ -38,11 +70,14 @@ export function ChatRoom({ threadId, userId, initialMessages }: { threadId: numb
         .order("id");
       if (data?.length) {
         append(data);
-        // 보고 있는 대화방의 DM 알림은 바로 읽음 처리
-        await supabase.from("notifications").update({ is_read: true }).eq("user_id", userId).eq("type", "new_dm").eq("target_id", threadId);
+        markRead();
       }
-    }, POLL_MS);
-    return () => clearInterval(timer);
+    }, FALLBACK_POLL_MS);
+
+    return () => {
+      clearInterval(timer);
+      channelPromise.then((channel) => supabase.removeChannel(channel));
+    };
   }, [threadId, userId]);
 
   useEffect(() => {

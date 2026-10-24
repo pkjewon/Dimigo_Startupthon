@@ -181,6 +181,12 @@
   .modal-request b { display: block; font-size: 12px; margin-bottom: 4px; }
   .modal-request small { color: #7c7d78; font-size: 10px; }
 
+  /* ---------- toast ---------- */
+  .toast { position: fixed; z-index: 100; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: #171817; color: #fff; padding: 14px 18px; font-size: 12px; box-shadow: 0 8px 30px #0003; white-space: nowrap; animation: toast-in .25s ease both; }
+  .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #f5d547; flex: none; }
+  .toast-go { color: #c9c9c5; margin-left: 6px; }
+  @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
   /* ---------- chat ---------- */
   .chat { background: #fff; border: 1px solid #e9e9e6; }
   .chat-list { height: min(60vh, 520px); overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 10px; }

@@ -1,14 +1,24 @@
 import Link from "next/link";
 import { RequestCard, type RequestCardData } from "@/components/request-card";
 import { requireUser } from "@/lib/auth";
-import { won } from "@/lib/format";
+import { timeSlotName } from "@/lib/constants";
+import { shortDate, todayKst, won } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
+import type { Visit } from "@/lib/types";
 
 type MyOrder = {
   id: number;
   amount: number;
   created_at: string;
   proposal: { product_name: string; seller: { nickname: string; seller_profile: { shop_name: string } | null } | null } | null;
+};
+
+type MyVisit = Visit & {
+  proposal: {
+    product_name: string;
+    request_id: number;
+    seller: { nickname: string; seller_profile: { shop_name: string; location_url: string | null } | null } | null;
+  } | null;
 };
 
 const REQUEST_SELECT = "*, consumer:profiles!consumer_id(nickname), proposals(count)";
@@ -18,7 +28,7 @@ export default async function MyPage() {
   const user = await requireUser("consumer", "/me");
   const supabase = await createClient();
 
-  const [{ data: myRequests }, { data: orders }, { data: watches }] = await Promise.all([
+  const [{ data: myRequests }, { data: orders }, { data: watches }, { data: visits }] = await Promise.all([
     supabase.from("requests").select(REQUEST_SELECT).eq("consumer_id", user.id).order("created_at", { ascending: false }).returns<RequestCardData[]>(),
     supabase
       .from("orders")
@@ -27,6 +37,16 @@ export default async function MyPage() {
       .order("created_at", { ascending: false })
       .returns<MyOrder[]>(),
     supabase.from("watches").select("request_id").eq("user_id", user.id).eq("notify", true),
+    supabase
+      .from("visits")
+      .select(
+        "id, proposal_id, visit_date, time_slot, note, status, proposal:proposals(product_name, request_id, seller:profiles!seller_id(nickname, seller_profile:seller_profiles(shop_name, location_url)))",
+      )
+      .eq("consumer_id", user.id)
+      .neq("status", "cancelled")
+      .gte("visit_date", todayKst())
+      .order("visit_date")
+      .returns<MyVisit[]>(),
   ]);
 
   const myIds = new Set((myRequests ?? []).map((r) => r.id));
@@ -77,6 +97,39 @@ export default async function MyPage() {
           </div>
         </section>
         <aside className="side-panel">
+          <div id="visits" className="how-card">
+            <div className="section-kicker">STORE VISITS</div>
+            <h3>매장 방문 예정 {visits?.length ?? 0}곳</h3>
+            {visits?.length === 0 && (
+              <p className="text-[11px] leading-relaxed text-[#c9c9c5]">오프라인 매장 제안에서 “방문 예정”을 누르면 여기에 모여요.</p>
+            )}
+            {visits?.map((v) => {
+              const shop = v.proposal?.seller?.seller_profile;
+              return (
+                <div key={v.id} className="how-step !grid-cols-[64px_1fr]">
+                  <b>
+                    {shortDate(v.visit_date)}
+                    <br />
+                    {timeSlotName(v.time_slot)}
+                  </b>
+                  <span>
+                    <strong className="block text-white">{shop?.shop_name ?? v.proposal?.seller?.nickname}</strong>
+                    <Link href={`/requests/${v.proposal?.request_id}`} className="block truncate text-[#a7a8a3] hover:underline">
+                      {v.proposal?.product_name}
+                    </Link>
+                    <span className="mt-1 flex gap-3 text-[10px]">
+                      <span>{v.status === "confirmed" ? "✓ 매장 확인" : "확인 대기"}</span>
+                      {shop?.location_url && (
+                        <a href={shop.location_url} target="_blank" rel="noreferrer" className="underline">
+                          📍 길찾기
+                        </a>
+                      )}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
           <div className="panel">
             <div className="panel-title">
               <h2>주문 내역</h2>

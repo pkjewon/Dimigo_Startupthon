@@ -5,7 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { categoryName, requestConditionName, SELLER_TYPES } from "@/lib/constants";
 import { timeAgo, won } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import type { Request, SellerProfile } from "@/lib/types";
+import { VisitButton } from "@/components/visit-button";
+import type { Request, SellerProfile, Visit } from "@/lib/types";
 import { startDm } from "./actions";
 import { ProposalButton } from "./proposal-form";
 import { WatchToggle } from "./watch-toggle";
@@ -59,12 +60,24 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
   ]);
   if (!request) notFound();
 
-  // 판매자 평균 평점
+  // 판매자 평균 평점 + (소비자) 내 방문 예정
   const sellerIds = [...new Set((proposals ?? []).map((p) => p.seller_id))];
-  const { data: ratings } = sellerIds.length
-    ? await supabase.from("seller_ratings").select("seller_id, avg_score, rating_count").in("seller_id", sellerIds)
-    : { data: [] };
+  const proposalIds = (proposals ?? []).map((p) => p.id);
+  const [{ data: ratings }, { data: visits }] = await Promise.all([
+    sellerIds.length
+      ? supabase.from("seller_ratings").select("seller_id, avg_score, rating_count").in("seller_id", sellerIds)
+      : Promise.resolve({ data: [] }),
+    user?.role === "consumer" && proposalIds.length
+      ? supabase
+          .from("visits")
+          .select("id, proposal_id, visit_date, time_slot, note, status")
+          .eq("consumer_id", user.id)
+          .in("proposal_id", proposalIds)
+          .returns<Visit[]>()
+      : Promise.resolve({ data: [] as Visit[] }),
+  ]);
   const ratingBySeller = new Map((ratings ?? []).map((r) => [r.seller_id, r]));
+  const visitByProposal = new Map((visits ?? []).map((v) => [v.proposal_id, v]));
 
   const all: ProposalCardData[] = (proposals ?? []).map((p) => ({ ...p, rating: ratingBySeller.get(p.seller_id) ?? null }));
   const visible = typeFilter ? all.filter((p) => p.seller?.seller_profile?.seller_type === typeFilter) : all;
@@ -161,6 +174,13 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
                   actions={
                     user?.role === "consumer" && (
                       <>
+                        {p.seller?.seller_profile?.seller_type === "offline" && (
+                          <VisitButton
+                            proposalId={p.id}
+                            shopName={p.seller.seller_profile.shop_name}
+                            visit={visitByProposal.get(p.id) ?? null}
+                          />
+                        )}
                         <form action={startDm.bind(null, p.seller_id, p.id)}>
                           <button className="btn btn-light btn-sm">문의하기</button>
                         </form>

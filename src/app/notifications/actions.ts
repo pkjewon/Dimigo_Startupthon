@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { notificationHref } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 // N-4: 알림을 누르면 읽음 처리하고 해당 글(또는 대화방)로 이동
@@ -17,7 +18,7 @@ export async function openNotification(id: number) {
     .select("type, target_id")
     .single();
   if (!data) redirect("/notifications");
-  redirect(data.type === "new_dm" ? `/dm/${data.target_id}` : `/requests/${data.target_id}`);
+  redirect(notificationHref(data.type, data.target_id));
 }
 
 export async function markAllRead() {

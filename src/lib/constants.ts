@@ -48,6 +48,17 @@ export function sellerTypeName(id: string) {
   return SELLER_TYPES.find((t) => t.id === id)?.name ?? id;
 }
 
+// 매장 방문 예정 시간대
+export const TIME_SLOTS = [
+  { id: "morning", name: "오전" },
+  { id: "afternoon", name: "오후" },
+  { id: "evening", name: "저녁" },
+] as const;
+
+export function timeSlotName(id: string) {
+  return TIME_SLOTS.find((t) => t.id === id)?.name ?? id;
+}
+
 // 사이트 내 결제 수수료 (표시용)
 export const FEE_RATE = 0.05;
 

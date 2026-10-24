@@ -325,6 +325,13 @@ const ORDERS = [
   { consumer: "c3", proposal: ["출근용 깔끔한 화이트 스니커즈 270", "퓨마 코트 클래식 화이트"] },
   { consumer: "c4", proposal: ["가벼운 봄 블루종 (살구·베이지 톤)", "라이트 봄버 재킷 살구"] },
 ];
+// 매장 방문 예정 예시: [소비자, 관련 제안(요청 제목, 상품명), 며칠 뒤, 시간대, 메모, 매장 확인 여부]
+const VISITS = [
+  ["c1", ["90s 블랙 레더 블루종, 어깨 48cm 내외", "빈티지 레더 블루종 블랙"], 2, "afternoon", "오후에 들를게요! L 사이즈로 입어보고 싶어요", true],
+  ["c3", ["노트북 들어가는 갈색 가죽 백팩", "빈티지 레더 백팩 브라운"], 3, "evening", "퇴근하고 들를게요. 노트북 넣어볼 수 있을까요?", false],
+  ["c4", ["가벼운 봄 블루종 (살구·베이지 톤)", "베이지 코튼 블루종"], 1, "morning", "M 사이즈 있으면 입어볼게요", true],
+];
+
 const RATINGS = [
   ["c2", "online1", 5],
   ["c1", "online1", 4],
@@ -499,6 +506,25 @@ async function main() {
       address: "서울시 성동구 (시연용 주소)",
     });
     console.log(`  + ${consumer.nickname}: ${o.proposal[1]}`);
+  }
+
+  console.log("매장 방문 예정");
+  for (const [c, [title, productName], daysLater, slot, note, confirmed] of VISITS) {
+    const consumer = users[c];
+    const proposalId = proposalIds.get(`${title}|${productName}`);
+    const visitDate = new Date(Date.now() + 9 * 3600_000 + daysLater * 86400_000).toISOString().slice(0, 10); // 한국 날짜
+    const [visit] = await api(
+      consumer.token,
+      "POST",
+      "visits?on_conflict=consumer_id,proposal_id",
+      { consumer_id: consumer.id, proposal_id: proposalId, visit_date: visitDate, time_slot: slot, note, status: "planned" },
+      "resolution=merge-duplicates,return=representation",
+    );
+    if (confirmed) {
+      const seller = Object.values(users).find((u) => u.id === visit.seller_id);
+      await api(seller.token, "PATCH", `visits?id=eq.${visit.id}`, { status: "confirmed" });
+    }
+    console.log(`  ${consumer.nickname} → ${productName} (${visitDate}${confirmed ? ", 확인" : ""})`);
   }
 
   console.log("평점");

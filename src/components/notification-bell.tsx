@@ -1,20 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { NOTIFICATION_TEXT, notificationHref } from "@/lib/notifications";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeWithAuth } from "@/lib/supabase/realtime";
 
 // Realtime 이 끊겼을 때를 위한 보조 새로고침
 const FALLBACK_POLL_MS = 60000;
 const TOAST_MS = 5000;
-
-const TOAST_TEXT: Record<string, string> = {
-  new_request: "관심 카테고리에 새 요청글이 올라왔어요",
-  new_proposal: "따라가는 요청글에 새 제안이 달렸어요",
-  new_dm: "새 메시지가 도착했어요",
-};
 
 type Toast = { id: number; text: string; href: string };
 type NotificationRow = { id: number; type: string; target_id: number; is_read: boolean };
@@ -24,6 +19,7 @@ export function NotificationBell({ userId, initialCount }: { userId: string; ini
   const [count, setCount] = useState(initialCount);
   const [toast, setToast] = useState<Toast | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
 
   const refresh = useCallback(async () => {
     const { count } = await createClient()
@@ -57,10 +53,12 @@ export function NotificationBell({ userId, initialCount }: { userId: string; ini
               refresh();
               if (payload.eventType !== "INSERT") return;
               const n = payload.new as NotificationRow;
+              // 지금 보고 있는 화면 내용도 갱신 (새 제안·방문 예정이 바로 보이게)
+              router.refresh();
               // 지금 보고 있는 대화방의 DM 은 토스트 생략
-              const href = n.type === "new_dm" ? `/dm/${n.target_id}` : `/requests/${n.target_id}`;
-              if (window.location.pathname === href) return;
-              setToast({ id: n.id, text: TOAST_TEXT[n.type] ?? "새 알림이 있어요", href });
+              const href = notificationHref(n.type, n.target_id);
+              if (n.type === "new_dm" && window.location.pathname === href) return;
+              setToast({ id: n.id, text: NOTIFICATION_TEXT[n.type] ?? "새 알림이 있어요", href });
             },
           ),
       "notifications",
@@ -70,7 +68,7 @@ export function NotificationBell({ userId, initialCount }: { userId: string; ini
       clearInterval(timer);
       channelPromise.then((channel) => supabase.removeChannel(channel));
     };
-  }, [userId, refresh]);
+  }, [userId, refresh, router]);
 
   useEffect(() => {
     if (!toast) return;

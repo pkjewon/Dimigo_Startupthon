@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { RequestCard, type RequestCardData } from "@/components/request-card";
 import { requireUser } from "@/lib/auth";
-import { categoryName } from "@/lib/constants";
-import { timeAgo, won } from "@/lib/format";
+import { confirmVisit } from "@/app/visits/actions";
+import { categoryName, timeSlotName } from "@/lib/constants";
+import { shortDate, timeAgo, todayKst, won } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import type { SellerProfile } from "@/lib/types";
+import type { SellerProfile, Visit } from "@/lib/types";
 
 type MyProposal = {
   id: number;
@@ -12,6 +13,11 @@ type MyProposal = {
   price: number;
   created_at: string;
   request: { id: number; title: string } | null;
+};
+
+type StoreVisit = Visit & {
+  consumer: { nickname: string } | null;
+  proposal: { product_name: string; request_id: number } | null;
 };
 
 type ReceivedOrder = {
@@ -30,7 +36,9 @@ export default async function SellerDashboardPage() {
   const { data: profile } = await supabase.from("seller_profiles").select("*").eq("user_id", user.id).single<SellerProfile>();
   const interests = profile?.interest_categories ?? [];
 
-  const [{ data: requests }, { data: proposals }, { data: orders }] = await Promise.all([
+  const isOffline = profile?.seller_type === "offline";
+
+  const [{ data: requests }, { data: proposals }, { data: orders }, { data: visits }] = await Promise.all([
     interests.length
       ? supabase
           .from("requests")
@@ -54,6 +62,18 @@ export default async function SellerDashboardPage() {
       .eq("proposal.seller_id", user.id)
       .order("created_at", { ascending: false })
       .returns<ReceivedOrder[]>(),
+    // 오늘 이후 방문 예정 (취소 제외), 가까운 날짜순
+    isOffline
+      ? supabase
+          .from("visits")
+          .select("id, proposal_id, visit_date, time_slot, note, status, consumer:profiles!consumer_id(nickname), proposal:proposals(product_name, request_id)")
+          .eq("seller_id", user.id)
+          .neq("status", "cancelled")
+          .gte("visit_date", todayKst())
+          .order("visit_date")
+          .order("time_slot")
+          .returns<StoreVisit[]>()
+      : Promise.resolve({ data: [] as StoreVisit[] }),
   ]);
 
   const sales = (orders ?? []).reduce((sum, o) => sum + o.amount, 0);
@@ -78,6 +98,46 @@ export default async function SellerDashboardPage() {
           </Link>
         </div>
       </div>
+
+      {isOffline && (
+        <section id="visits" className="pt-9">
+          <div className="section-head !mb-4">
+            <div>
+              <div className="section-kicker">STORE VISITS</div>
+              <h2 className="section-title">
+                방문 예정 손님 <small>온라인에서 내 제안을 보고 매장에 오는 손님이에요</small>
+              </h2>
+            </div>
+          </div>
+          <ul className="grid gap-2 md:grid-cols-2">
+            {visits?.length === 0 && <li className="empty-state">아직 방문 예정 손님이 없어요.</li>}
+            {visits?.map((v) => (
+              <li key={v.id} className={`panel flex items-center gap-4 !py-4 ${v.status === "planned" ? "!border-ink" : ""}`}>
+                <div className="w-16 flex-none text-center">
+                  <p className="text-base font-bold">{shortDate(v.visit_date).split("(")[0]}</p>
+                  <p className="text-[10px] text-muted">
+                    ({shortDate(v.visit_date).split("(")[1]} {timeSlotName(v.time_slot)}
+                  </p>
+                </div>
+                <div className="min-w-0 flex-1 text-xs">
+                  <p className="font-bold">{v.consumer?.nickname ?? "손님"}</p>
+                  <Link href={`/requests/${v.proposal?.request_id}`} className="mt-1 block truncate text-[11px] text-muted hover:underline">
+                    {v.proposal?.product_name}
+                  </Link>
+                  {v.note && <p className="mt-1 truncate text-[11px]">“{v.note}”</p>}
+                </div>
+                {v.status === "planned" ? (
+                  <form action={confirmVisit.bind(null, v.id)}>
+                    <button className="btn btn-sm">확인했어요</button>
+                  </form>
+                ) : (
+                  <span className="tag tag-dark flex-none">확인 완료</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="pt-9">
         <div className="section-head">

@@ -181,6 +181,12 @@
   .modal-request b { display: block; font-size: 12px; margin-bottom: 4px; }
   .modal-request small { color: #7c7d78; font-size: 10px; }
 
+  /* ---------- visit ---------- */
+  .visit-pill { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 7px 10px; background: #f3f3f1; border: 1px solid #171817; font-size: 10px; }
+  .visit-pill b { background: #171817; color: #fff; padding: 2px 6px; font-weight: 600; }
+  .visit-pill button { color: #777874; text-decoration: underline; text-underline-offset: 3px; }
+  .visit-pill button:hover { color: #171817; }
+
   /* ---------- toast ---------- */
   .toast { position: fixed; z-index: 100; left: 50%; bottom: 28px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; background: #171817; color: #fff; padding: 14px 18px; font-size: 12px; box-shadow: 0 8px 30px #0003; white-space: nowrap; animation: toast-in .25s ease both; }
   .toast-dot { width: 7px; height: 7px; border-radius: 50%; background: #f5d547; flex: none; }

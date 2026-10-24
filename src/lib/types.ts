@@ -45,5 +45,14 @@ export type Proposal = {
   created_at: string;
 };
 
+export type Visit = {
+  id: number;
+  proposal_id: number;
+  visit_date: string; // YYYY-MM-DD
+  time_slot: "morning" | "afternoon" | "evening";
+  note: string;
+  status: "planned" | "confirmed" | "cancelled";
+};
+
 // 폼 server action 의 반환 상태
 export type FormState = { error?: string; ok?: boolean } | undefined;

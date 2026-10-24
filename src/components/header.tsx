@@ -31,11 +31,8 @@ export async function Header() {
       <header className="site-header">
         <div className="header-main">
           <Link href="/" className="brand" aria-label={`${SERVICE_NAME} 홈`}>
-            <span className="brand-mark">{SERVICE_NAME[0]}</span>
-            <span>
-              <span className="brand-name">{SERVICE_NAME}</span>
-              <span className="brand-sub">FIND WHAT YOU FEEL</span>
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/flip-logo.png" alt={SERVICE_NAME} className="brand-logo" />
           </Link>
 
           <Suspense fallback={<div className="search" />}>

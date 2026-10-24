@@ -1,5 +1,4 @@
-// 서비스 이름은 미정. 정해지면 여기만 바꾸면 됨
-export const SERVICE_NAME = "WANTED";
+export const SERVICE_NAME = "flip";
 export const SERVICE_TAGLINE = "원하는 옷을 말하면, 판매자가 찾아와요";
 
 // DB categories 테이블과 같은 값 (supabase/migrations/0001_init.sql)

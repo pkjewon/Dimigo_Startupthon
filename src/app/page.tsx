@@ -1,69 +1,106 @@
-import Image from "next/image";
+import Link from "next/link";
+import { RequestCard, type RequestCardData } from "@/components/request-card";
+import { getCurrentUser } from "@/lib/auth";
+import { CATEGORIES, categoryName } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/server";
 
-export default function Home() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
+  const params = await searchParams;
+  const category = typeof params.category === "string" ? params.category : "";
+  const q = typeof params.q === "string" ? params.q.trim() : "";
+  const user = await getCurrentUser();
+
+  const supabase = await createClient();
+  let query = supabase
+    .from("requests")
+    .select("*, consumer:profiles!consumer_id(nickname), proposals(count)")
+    .order("created_at", { ascending: false })
+    .limit(60);
+  if (CATEGORIES.some((c) => c.id === category)) query = query.eq("category_id", category);
+  if (q) {
+    // PostgREST or 필터 문법을 깨뜨리는 문자는 제거
+    const term = q.replace(/[,()%*\\]/g, " ");
+    query = query.or(`title.ilike.%${term}%,body.ilike.%${term}%,brand.ilike.%${term}%`);
+  }
+  const { data: requests, error } = await query.returns<RequestCardData[]>();
+
+  const ctaHref = user?.role === "seller" ? "/seller/settings" : user ? "/requests/new" : "/signup";
+  const filtered = category || q;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      {!filtered && (
+        <div className="hero">
+          <div className="hero-copy">
+            <div className="eyebrow">A NEW WAY TO FIND FASHION</div>
+            <h1>
+              원하는 옷을 말하면,
+              <br />
+              <em>판매자가 찾아와요.</em>
+            </h1>
+            <p className="hero-desc">
+              검색해도 나오지 않던 옷, 어디서 파는지 몰랐던 매장. 찾는 옷을 남기면 온라인 쇼핑몰과 동네 매장이 직접 제안해요.
+            </p>
+            <div className="flex gap-2">
+              {user?.role !== "seller" && (
+                <Link href={user ? "/requests/new" : "/login?next=/requests/new"} className="btn">
+                  원하는 옷 요청하기 →
+                </Link>
+              )}
+              <a href="#feed" className="btn btn-light">
+                요청 둘러보기
+              </a>
+            </div>
+          </div>
+          <div className="hero-visual" />
+        </div>
+      )}
+
+      <section id="feed" className={filtered ? "pt-9" : ""}>
+        <div className="section-head">
+          <div>
+            <div className="section-kicker">OPEN REQUESTS</div>
+            <h2 className="section-title">
+              {q ? `"${q}" 검색 결과` : category ? `${categoryName(category)} 요청` : "지금 찾는 옷"}
+              <small>판매자의 제안을 기다리고 있어요</small>
+            </h2>
+          </div>
+        </div>
+
+        <div className="filter-bar">
+          <Link href="/" className={`filter-chip ${!category ? "active" : ""}`}>
+            전체
+          </Link>
+          {CATEGORIES.map((c) => (
+            <Link key={c.id} href={`/?category=${c.id}`} className={`filter-chip ${category === c.id ? "active" : ""}`}>
+              {c.name}
+            </Link>
+          ))}
+        </div>
+
+        <div className="request-grid">
+          {error && <div className="empty-state">요청글을 불러오지 못했어요: {error.message}</div>}
+          {requests?.length === 0 && (
+            <div className="empty-state">{q ? "검색 결과가 없어요." : "아직 이 카테고리의 요청이 없어요."}</div>
+          )}
+          {requests?.map((r) => <RequestCard key={r.id} request={r} />)}
+        </div>
+      </section>
+
+      <div className="daily-banner">
+        <div>
+          <div className="eyebrow !text-[#a7a8a3]">YOUR TASTE, YOUR MARKET</div>
+          <h2>{user?.role === "seller" ? "관심 카테고리를 설정했나요?" : "찾는 옷이 보이지 않나요?"}</h2>
+          <p>
+            {user?.role === "seller"
+              ? "관심 카테고리에 새 요청이 올라오면 바로 알려드려요."
+              : "원하는 조건을 남기면 판매자가 직접 제안해요."}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        <Link href={ctaHref} className="btn">
+          {user?.role === "seller" ? "판매자 설정 →" : "요청 시작하기 →"}
+        </Link>
+      </div>
+    </>
   );
 }

@@ -49,8 +49,8 @@ export async function Header() {
               </Link>
             )}
             {user?.role === "seller" && (
-              <Link href="/seller/settings" className="text-action">
-                판매자 설정
+              <Link href="/seller/dashboard" className="text-action">
+                대시보드
               </Link>
             )}
             {user ? (
@@ -61,7 +61,13 @@ export async function Header() {
                   </svg>
                 </Link>
                 <NotificationBell userId={user.id} initialCount={unread} />
-                <span className="text-action text-muted">{user.nickname}</span>
+                <Link
+                  href={user.role === "seller" ? "/seller/dashboard" : "/me"}
+                  className="text-action text-muted"
+                  title={user.role === "seller" ? "대시보드" : "마이페이지"}
+                >
+                  {user.nickname}
+                </Link>
                 <form action={logout}>
                   <button className="text-action">로그아웃</button>
                 </form>

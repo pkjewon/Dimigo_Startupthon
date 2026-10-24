@@ -10,6 +10,7 @@ Next.js 16 (App Router) + TypeScript + Tailwind CSS 4 / Supabase (Postgres, Auth
 2. Supabase 대시보드 > SQL Editor 에서 [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) 전체 실행
 3. Supabase 대시보드 > Authentication > Sign In / Providers > Email 에서 **Confirm email 끄기** (시연용, 가입 즉시 로그인)
 4. `npm install` → `npm run dev` → http://localhost:3000
+5. (선택) 시연용 데이터 넣기: `node supabase/seed.mjs` → 계정 정보는 `supabase/demo-accounts.local.md` (커밋 안 됨)
 
 ## 폴더 구조
 ```
@@ -20,7 +21,13 @@ src/
     requests/new             요청글 작성 (소비자)
     requests/[id]            요청글 상세 + 제안 목록
     seller/settings          판매자 설정 (유형·링크·관심 카테고리·구독 토글)
-    notifications            알림 목록
+    seller/dashboard         판매자 대시보드 (관심 카테고리 요청, 내 제안, 주문·수수료)
+    sellers/[id]             판매자 프로필 + 평점
+    notifications            알림 목록 (누르면 읽음 처리)
+    dm, dm/[id]              DM 목록·대화 (소비자만 시작)
+    checkout/[proposalId]    모의 결제
+    orders/[id]              결제 완료 + 평점 남기기
+    me                       마이페이지 (내 요청, 주문, 알림 켠 글)
   components/                헤더, 요청 카드, 제안 카드
   lib/
     supabase/                서버·브라우저 클라이언트

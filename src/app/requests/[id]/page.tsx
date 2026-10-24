@@ -160,9 +160,14 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
                   proposal={p}
                   actions={
                     user?.role === "consumer" && (
-                      <form action={startDm.bind(null, p.seller_id, p.id)}>
-                        <button className="btn btn-light btn-sm">문의하기</button>
-                      </form>
+                      <>
+                        <form action={startDm.bind(null, p.seller_id, p.id)}>
+                          <button className="btn btn-light btn-sm">문의하기</button>
+                        </form>
+                        <Link href={`/checkout/${p.id}`} className="btn btn-sm">
+                          바로 구매
+                        </Link>
+                      </>
                     )
                   }
                 />

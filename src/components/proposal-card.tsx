@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PROPOSAL_CONDITIONS, sellerTypeName } from "@/lib/constants";
 import { timeAgo, won } from "@/lib/format";
 import type { Proposal, SellerProfile } from "@/lib/types";
@@ -26,7 +27,9 @@ export function ProposalCard({ proposal, actions }: { proposal: ProposalCardData
       <div className="flex min-w-0 flex-col">
         <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px] text-muted">
           {sp?.is_subscribed && <span className="tag tag-dark !py-1">구독 · AD</span>}
-          <strong className="text-ink">{shopName}</strong>
+          <Link href={`/sellers/${proposal.seller_id}`} className="font-bold text-ink hover:underline">
+            {shopName}
+          </Link>
           {sp && <span>· {sellerTypeName(sp.seller_type)}</span>}
           <span>· ★ {proposal.rating ? `${proposal.rating.avg_score} (${proposal.rating.rating_count})` : "-"}</span>
           <span className="ml-auto">{timeAgo(proposal.created_at)}</span>

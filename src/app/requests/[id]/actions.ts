@@ -63,7 +63,7 @@ export async function setWatch(requestId: number, notify: boolean) {
 }
 
 // D-1, D-2: 소비자만 문의 시작. 같은 판매자와는 대화방 하나
-export async function startDm(sellerId: string, proposalId: number) {
+export async function startDm(sellerId: string, proposalId: number | null) {
   const user = await requireUser("consumer");
   const supabase = await createClient();
 
@@ -84,5 +84,5 @@ export async function startDm(sellerId: string, proposalId: number) {
     if (error) throw new Error(error.message);
     threadId = data.id;
   }
-  redirect(`/dm/${threadId}?proposal=${proposalId}`);
+  redirect(proposalId ? `/dm/${threadId}?proposal=${proposalId}` : `/dm/${threadId}`);
 }

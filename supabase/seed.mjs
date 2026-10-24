@@ -512,7 +512,14 @@ async function main() {
   for (const [c, [title, productName], daysLater, slot, note, confirmed] of VISITS) {
     const consumer = users[c];
     const proposalId = proposalIds.get(`${title}|${productName}`);
-    const visitDate = new Date(Date.now() + 9 * 3600_000 + daysLater * 86400_000).toISOString().slice(0, 10); // 한국 날짜
+    const today = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10); // 한국 날짜
+    const visitDate = new Date(Date.now() + 9 * 3600_000 + daysLater * 86400_000).toISOString().slice(0, 10);
+    // 아직 지나지 않은 방문 예정이 있으면 그대로 둠 (다시 잡으면 알림이 또 생김)
+    const [existing] = await api(consumer.token, "GET", `visits?select=id,visit_date,status&consumer_id=eq.${consumer.id}&proposal_id=eq.${proposalId}`);
+    if (existing && existing.status !== "cancelled" && existing.visit_date >= today) {
+      console.log(`  = ${consumer.nickname} → ${productName} (${existing.visit_date})`);
+      continue;
+    }
     const [visit] = await api(
       consumer.token,
       "POST",

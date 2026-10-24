@@ -54,7 +54,8 @@ export default async function SellerPage({ params }: PageProps<"/sellers/[id]">)
           <h1>{profile.shop_name}</h1>
           <p>
             ★ {rating ? `${rating.avg_score} (평가 ${rating.rating_count}개)` : "아직 평가 없음"} · 제안 {proposals?.length ?? 0}개
-            {profile.interest_categories.length > 0 && ` · 관심 ${profile.interest_categories.map(categoryName).join(", ")}`}
+            {/* 관심 카테고리는 판매자 본인의 알림 설정이라 본인에게만 */}
+            {isOwn && profile.interest_categories.length > 0 && ` · 알림 받는 카테고리 ${profile.interest_categories.map(categoryName).join(", ")}`}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -1,13 +1,14 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { roleHome } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { FormState } from "@/lib/types";
 
-// 외부 주소로 튕기지 않도록 내부 경로만 허용
+// 외부 주소로 튕기지 않도록 내부 경로만 허용 (없으면 null)
 function safeNext(value: FormDataEntryValue | null) {
   const next = typeof value === "string" ? value : "";
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  return next.startsWith("/") && !next.startsWith("//") && next !== "/" ? next : null;
 }
 
 export async function login(_: FormState, formData: FormData): Promise<FormState> {
@@ -16,10 +17,12 @@ export async function login(_: FormState, formData: FormData): Promise<FormState
   if (!email || !password) return { error: "이메일과 비밀번호를 입력해주세요." };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: "이메일 또는 비밀번호가 맞지 않아요." };
 
-  redirect(safeNext(formData.get("next")));
+  // 따로 가려던 곳이 없으면 역할별 첫 화면으로 (판매자는 대시보드)
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+  redirect(safeNext(formData.get("next")) ?? roleHome(profile?.role ?? "consumer"));
 }
 
 export async function signup(_: FormState, formData: FormData): Promise<FormState> {

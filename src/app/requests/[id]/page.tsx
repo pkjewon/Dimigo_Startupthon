@@ -171,6 +171,7 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
                 <ProposalCard
                   key={p.id}
                   proposal={p}
+                  viewer={user}
                   actions={
                     user?.role === "consumer" && (
                       <>

@@ -18,9 +18,15 @@ export const getCurrentUser = cache(async (): Promise<Profile | null> => {
   return profile as Profile | null;
 });
 
+// 역할별 첫 화면: 판매자는 대시보드, 소비자는 요청글 피드
+export function roleHome(role: Role) {
+  return role === "seller" ? "/seller/dashboard" : "/";
+}
+
 export async function requireUser(role?: Role, next?: string): Promise<Profile> {
   const user = await getCurrentUser();
   if (!user) redirect(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
-  if (role && user.role !== role) redirect("/");
+  // 다른 역할 전용 화면이면 내 역할의 첫 화면으로
+  if (role && user.role !== role) redirect(roleHome(user.role));
   return user;
 }

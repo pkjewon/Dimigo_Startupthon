@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, roleHome } from "@/lib/auth";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  if (await getCurrentUser()) redirect("/");
+  const current = await getCurrentUser();
+  if (current) redirect(roleHome(current.role));
   const { next } = await searchParams;
 
   return (

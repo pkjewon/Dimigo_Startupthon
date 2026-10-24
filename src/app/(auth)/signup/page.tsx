@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, roleHome } from "@/lib/auth";
 import { SignupForm } from "./signup-form";
 
 export default async function SignupPage() {
-  if (await getCurrentUser()) redirect("/");
+  const current = await getCurrentUser();
+  if (current) redirect(roleHome(current.role));
 
   return (
     <div className="mx-auto max-w-md py-16">

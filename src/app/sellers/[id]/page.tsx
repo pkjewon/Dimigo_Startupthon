@@ -40,6 +40,9 @@ export default async function SellerPage({ params }: PageProps<"/sellers/[id]">)
   ]);
   if (!profile) notFound();
 
+  const isOwn = user?.id === profile.user_id;
+  const showBuyerLinks = user?.role !== "seller" || isOwn;
+
   return (
     <>
       <div className="subpage-intro">
@@ -55,12 +58,18 @@ export default async function SellerPage({ params }: PageProps<"/sellers/[id]">)
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {profile.location_url && (
+          {isOwn && (
+            <Link href="/seller/settings" className="btn btn-sm">
+              프로필 수정
+            </Link>
+          )}
+          {/* 매장 위치·판매 사이트는 손님용 (다른 판매자에게는 숨김, 내 프로필이면 미리보기로 보여줌) */}
+          {showBuyerLinks && profile.location_url && (
             <a href={profile.location_url} target="_blank" rel="noreferrer" className="btn btn-light btn-sm">
               📍 매장 위치
             </a>
           )}
-          {profile.shop_url && (
+          {showBuyerLinks && profile.shop_url && (
             <a href={profile.shop_url} target="_blank" rel="noreferrer" className="btn btn-light btn-sm">
               판매 사이트
             </a>
@@ -115,16 +124,25 @@ export default async function SellerPage({ params }: PageProps<"/sellers/[id]">)
           {user?.role === "consumer" && (
             <RatingForm sellerId={profile.user_id} shopName={profile.shop_name} myScore={myRating?.score ?? null} />
           )}
-          <div className="tip-card">
-            <h3>{sellerTypeName(profile.seller_type)}</h3>
-            <p>
-              {profile.seller_type === "offline"
-                ? "직접 찾아가서 입어보고 살 수 있는 매장이에요. 방문 전에 문의하기로 재고를 확인해보세요."
-                : profile.seller_type === "online"
-                  ? "온라인 쇼핑몰이에요. 판매 사이트에서 다른 상품도 볼 수 있어요."
-                  : "개인 판매자예요. 거래 전에 문의하기로 상품 상태를 확인해보세요."}
-            </p>
-          </div>
+          {isOwn ? (
+            <div className="tip-card">
+              <h3>내 프로필 미리보기</h3>
+              <p>손님에게는 이 화면이 보여요. 손님 화면에는 문의하기·평점 남기기 버튼이 함께 보여요.</p>
+            </div>
+          ) : (
+            user?.role !== "seller" && (
+              <div className="tip-card">
+                <h3>{sellerTypeName(profile.seller_type)}</h3>
+                <p>
+                  {profile.seller_type === "offline"
+                    ? "직접 찾아가서 입어보고 살 수 있는 매장이에요. 방문 전에 문의하기로 재고를 확인해보세요."
+                    : profile.seller_type === "online"
+                      ? "온라인 쇼핑몰이에요. 판매 사이트에서 다른 상품도 볼 수 있어요."
+                      : "개인 판매자예요. 거래 전에 문의하기로 상품 상태를 확인해보세요."}
+                </p>
+              </div>
+            )
+          )}
         </aside>
       </div>
     </>

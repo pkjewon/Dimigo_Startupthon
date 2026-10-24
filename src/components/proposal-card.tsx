@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PROPOSAL_CONDITIONS, sellerTypeName } from "@/lib/constants";
 import { timeAgo, won } from "@/lib/format";
-import type { Proposal, SellerProfile } from "@/lib/types";
+import type { Proposal, Role, SellerProfile } from "@/lib/types";
 
 export type ProposalCardData = Proposal & {
   seller: {
@@ -11,10 +11,19 @@ export type ProposalCardData = Proposal & {
   rating: { avg_score: number; rating_count: number } | null;
 };
 
-export function ProposalCard({ proposal, actions }: { proposal: ProposalCardData; actions?: React.ReactNode }) {
+type Props = {
+  proposal: ProposalCardData;
+  actions?: React.ReactNode;
+  // 보는 사람: 판매자에게는 구매용 링크(판매자 사이트·매장 위치)를 보여주지 않음
+  viewer: { id: string; role: Role } | null;
+};
+
+export function ProposalCard({ proposal, actions, viewer }: Props) {
   const sp = proposal.seller?.seller_profile;
   const shopName = sp?.shop_name ?? proposal.seller?.nickname ?? "판매자";
   const condition = PROPOSAL_CONDITIONS.find((c) => c.id === proposal.condition)?.name;
+  const isMine = viewer?.id === proposal.seller_id;
+  const showBuyerLinks = viewer?.role !== "seller";
 
   return (
     <article className={`proposal-card ${sp?.is_subscribed ? "subscribed" : ""}`}>
@@ -26,6 +35,7 @@ export function ProposalCard({ proposal, actions }: { proposal: ProposalCardData
       </div>
       <div className="flex min-w-0 flex-col">
         <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[10px] text-muted">
+          {isMine && <span className="tag !border !border-ink !bg-white !py-1 font-bold text-ink">내 제안</span>}
           {sp?.is_subscribed && <span className="tag tag-dark !py-1">구독 · AD</span>}
           <Link href={`/sellers/${proposal.seller_id}`} className="font-bold text-ink hover:underline">
             {shopName}
@@ -44,12 +54,12 @@ export function ProposalCard({ proposal, actions }: { proposal: ProposalCardData
           <strong className="text-base">{won(proposal.price)}</strong>
           <div className="flex flex-wrap gap-2">
             {actions}
-            {proposal.location_url && (
+            {showBuyerLinks && proposal.location_url && (
               <a href={proposal.location_url} target="_blank" rel="noreferrer" className="btn btn-light btn-sm">
                 매장 위치
               </a>
             )}
-            {proposal.product_url && (
+            {showBuyerLinks && proposal.product_url && (
               <a href={proposal.product_url} target="_blank" rel="noreferrer" className="btn btn-sm">
                 판매자 사이트에서 보기
               </a>

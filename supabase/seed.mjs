@@ -1,5 +1,5 @@
 // 시연용 데이터 (PRD 8장 + 예시 보강)
-// 소비자 4, 판매자 6 (온라인 3·오프라인 2·개인 1, 그중 구독 1), 요청글 22개, 글마다 제안 2~3개, DM·주문·평점 예시
+// 소비자 4, 판매자 6 (온라인 3·오프라인 2·개인 1, 그중 구독 1), 요청글 22개 + 코디 요청 5개, 제안·코디, DM·주문·평점 예시
 // 실행: node supabase/seed.mjs   (.env.local 의 Supabase URL·키 사용, Confirm email 이 꺼져 있어야 함)
 // 계정 비밀번호는 supabase/demo-accounts.local.md 에 저장 (gitignore).
 // 다시 실행해도 됨: 있는 계정은 로그인, 있는 글은 사진·시간만 맞추고, DM·주문·평점은 중복 생성하지 않음
@@ -291,6 +291,99 @@ const REQUESTS = [
   },
 ];
 
+// 코디 모드 예시: 체형·취향을 남긴 코디 요청 + 판매자가 상품 2~4개로 묶은 코디
+// 제목은 앱과 같은 규칙 ("데이트에 입을 미니멀 코디")
+const STYLING = [
+  {
+    by: "c4", hoursAgo: 0.4, title: "데일리로 입을 미니멀 코디", category_id: "outer", budget_max: 200000,
+    occasion: "daily", height_cm: 165, top_size: "M", bottom_size: "27 / M", fit: "relaxed", styles: ["minimal"], pieces: ["outer", "top", "bottom"],
+    body: "출퇴근길에 편하게 걸칠 수 있는 아우터 위주로요. 무채색이면 좋겠어요.",
+    looks: [],
+  },
+  {
+    by: "c3", hoursAgo: 1.5, title: "데이트에 입을 미니멀 코디", category_id: "outer", budget_max: 250000,
+    occasion: "date", height_cm: 168, top_size: "M", bottom_size: "28–29 / M", fit: "regular", styles: ["minimal", "vintage"], pieces: ["outer", "top", "bottom", "bag"],
+    body: "차분하고 단정한 분위기를 원해요. 너무 붙거나 짧은 옷은 피하고 싶고, 평소 입는 옷과도 잘 어울렸으면 좋겠어요.",
+    looks: [
+      {
+        by: "offline", title: "차분한 톤의 데이트 룩", image_url: IMG.knit,
+        description: "168cm · M 기준으로 어깨가 너무 크지 않은 코트를 골랐어요. 크림 니트와 슬랙스로 톤을 맞춰서 단정하게 보이고, 매장에서 세 벌 모두 같이 입어볼 수 있어요.",
+        items: [
+          { category_id: "outer", product_name: "울 블렌드 싱글 코트 (차콜)", price: 129000, condition: "used_a", size_info: "M · 총장 108cm" },
+          { category_id: "top", product_name: "크림 라운드 니트", price: 49000, condition: "new", size_info: "M · 어깨 46cm" },
+          { category_id: "bottom", product_name: "스트레이트 울 슬랙스", price: 59000, condition: "new", size_info: "M · 총장 102cm" },
+        ],
+      },
+      {
+        by: "online1", title: "빈티지 한 스푼 레이어드 룩", image_url: IMG.leather,
+        description: "레더 재킷 하나로 빈티지 무드를 주고, 안은 화이트 티와 블랙 데님으로 깔끔하게 정리했어요. 정핏 선호하셔서 재킷은 M으로 골랐어요.",
+        items: [
+          { category_id: "outer", product_name: "빈티지 램스킨 레더 재킷", price: 139000, condition: "used_a", size_info: "M · 어깨 45cm", product_url: "https://example.com/archive-room/leather" },
+          { category_id: "top", product_name: "헤비웨이트 화이트 티셔츠", price: 29000, condition: "new", size_info: "M", product_url: "https://example.com/archive-room/tee" },
+          { category_id: "bottom", product_name: "블랙 스트레이트 데님", price: 59000, condition: "unused", size_info: "29 · 총장 103cm", product_url: "https://example.com/archive-room/black-denim" },
+        ],
+      },
+    ],
+  },
+  {
+    by: "c4", hoursAgo: 5, title: "여행에 입을 캐주얼 코디", category_id: "top", budget_max: 180000,
+    occasion: "travel", height_cm: 162, top_size: "S", bottom_size: "26 / S", fit: "over", styles: ["casual", "sporty"], pieces: ["top", "bottom", "shoes"],
+    body: "제주도 2박 3일, 하루에 만 보 넘게 걸을 것 같아요. 편하지만 사진은 예쁘게 나왔으면!",
+    looks: [
+      {
+        by: "online3", title: "많이 걸어도 편한 여행 룩", image_url: IMG.sweatWhite,
+        description: "오버핏을 좋아하셔서 스웻셔츠는 한 치수 큰 M으로 골랐어요. 와이드 팬츠와 쿠션 좋은 스니커즈로 오래 걸어도 편해요.",
+        items: [
+          { category_id: "top", product_name: "오버핏 화이트 스웻셔츠", price: 39000, condition: "new", size_info: "M · 가슴 60cm", product_url: "https://example.com/daily-basic/sweat" },
+          { category_id: "bottom", product_name: "와이드 나일론 트랙 팬츠", price: 45000, condition: "new", size_info: "S · 총장 98cm", product_url: "https://example.com/daily-basic/track" },
+          { category_id: "shoes", product_name: "화이트 레더 스니커즈", price: 79000, condition: "new", size_info: "235", product_url: "https://example.com/daily-basic/sneakers" },
+        ],
+      },
+    ],
+  },
+  {
+    by: "c1", hoursAgo: 20, title: "학교·출근용 미니멀 코디", category_id: "bottom", budget_max: 300000,
+    occasion: "school", height_cm: 175, top_size: "L", bottom_size: "31 / L", fit: "regular", styles: ["minimal", "classic"], pieces: ["outer", "top", "bottom"],
+    body: "다음 달 인턴 면접에도 입을 수 있게 단정한 셋업이면 좋겠어요.",
+    looks: [
+      {
+        by: "offline", title: "단정한 면접·출근 셋업", image_url: IMG.shirtDenim,
+        description: "175cm · L이면 블레이저는 L, 슬랙스는 31이 잘 맞아요. 셔츠는 블루 계열로 너무 딱딱하지 않게 골랐어요. 기장 수선은 매장에서 바로 해드려요.",
+        items: [
+          { category_id: "outer", product_name: "네이비 싱글 블레이저", price: 149000, condition: "new", size_info: "L · 어깨 47cm" },
+          { category_id: "top", product_name: "블루 옥스포드 셔츠", price: 45000, condition: "new", size_info: "L" },
+          { category_id: "bottom", product_name: "테이퍼드 울 슬랙스", price: 79000, condition: "new", size_info: "31 · 기장 수선 가능" },
+        ],
+      },
+      {
+        by: "online2", title: "캐주얼하게 입는 출근 룩", image_url: IMG.denimBlack,
+        description: "면접 날만 아니면 이렇게도 입을 수 있어요. 블랙 데님과 스니커즈로 편하지만 깔끔하게.",
+        items: [
+          { category_id: "top", product_name: "데님 웨스턴 셔츠", price: 59000, condition: "new", size_info: "L", product_url: "https://example.com/second-form/denim-shirt" },
+          { category_id: "bottom", product_name: "블랙 슬림 스트레이트 데님", price: 89000, condition: "new", size_info: "31", product_url: "https://example.com/second-form/black-denim" },
+          { category_id: "shoes", product_name: "화이트 로우 스니커즈", price: 79000, condition: "unused", size_info: "270", product_url: "https://example.com/second-form/low" },
+        ],
+      },
+    ],
+  },
+  {
+    by: "c2", hoursAgo: 30, title: "특별한 날 입을 빈티지 코디", category_id: "dress", budget_max: 350000,
+    occasion: "special", height_cm: 160, top_size: "S", bottom_size: "25 / S", fit: "slim", styles: ["vintage"], pieces: ["dress", "bag", "shoes"],
+    body: "친구 결혼식 2부에 입을 옷이에요. 너무 화려하지 않게, 사진에 잘 나오는 색이면 좋겠어요.",
+    looks: [
+      {
+        by: "personal", title: "결혼식 2부 원피스 룩", image_url: IMG.dressLong,
+        description: "한 번 입은 롱 원피스예요. 160cm면 발목 위로 떨어져요. 블랙 백과 화이트 펌프스로 색을 정리했어요.",
+        items: [
+          { category_id: "dress", product_name: "레드 롱 원피스", price: 89000, condition: "used_a", size_info: "S · 총장 125cm" },
+          { category_id: "bag", product_name: "블랙 퀼팅 체인백", price: 120000, condition: "used_a", size_info: "미니" },
+          { category_id: "shoes", product_name: "화이트 포인티드 펌프스", price: 59000, condition: "used_b", size_info: "230 · 굽 5cm" },
+        ],
+      },
+    ],
+  },
+];
+
 // 소비자가 먼저 시작한 DM 예시 (D-1, D-2): [소비자, 판매자, 관련 제안(요청 제목, 상품명), 메시지들]
 const DMS = [
   {
@@ -466,6 +559,49 @@ async function main() {
       proposalIds.set(`${r.title}|${p.product_name}`, id);
     }
     console.log(`  ${existing.length ? "=" : "+"} ${r.title} (제안 ${proposals.length})`);
+  }
+
+  console.log("코디 요청·코디");
+  for (const r of STYLING) {
+    const consumer = users[r.by];
+    const createdAt = hoursAgoIso(r.hoursAgo);
+    const existing = await api(consumer.token, "GET", `requests?select=id&consumer_id=eq.${consumer.id}&kind=eq.styling&title=eq.${q(r.title)}`);
+    let requestId = existing[0]?.id;
+    if (!requestId) {
+      requestId = await api(consumer.token, "POST", "rpc/create_styling_request", {
+        p_category_id: r.category_id,
+        p_title: r.title,
+        p_body: r.body,
+        p_budget_max: r.budget_max,
+        p_image_urls: [],
+        p_occasion: r.occasion,
+        p_height_cm: r.height_cm,
+        p_top_size: r.top_size,
+        p_bottom_size: r.bottom_size,
+        p_fit: r.fit,
+        p_styles: r.styles,
+        p_pieces: r.pieces,
+      });
+    }
+    await api(consumer.token, "PATCH", `requests?id=eq.${requestId}`, { created_at: createdAt }, "return=minimal");
+
+    for (const [i, look] of r.looks.entries()) {
+      const seller = users[look.by];
+      const lookAt = new Date(Math.min(Date.now(), new Date(createdAt).getTime() + (i + 1) * 25 * 60_000)).toISOString();
+      const found = await api(seller.token, "GET", `proposals?select=id&request_id=eq.${requestId}&seller_id=eq.${seller.id}&product_name=eq.${q(look.title)}`);
+      let id = found[0]?.id;
+      if (!id) {
+        id = await api(seller.token, "POST", "rpc/create_look", {
+          p_request_id: requestId,
+          p_title: look.title,
+          p_description: look.description,
+          p_image_url: look.image_url,
+          p_items: look.items,
+        });
+      }
+      await api(seller.token, "PATCH", `proposals?id=eq.${id}`, { image_url: look.image_url, created_at: lookAt }, "return=minimal");
+    }
+    console.log(`  ${existing.length ? "=" : "+"} ${r.title} (코디 ${r.looks.length})`);
   }
 
   console.log("알림 켠 남의 글 (N-3)");

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { roleHome } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -22,6 +23,7 @@ export async function login(_: FormState, formData: FormData): Promise<FormState
 
   // 따로 가려던 곳이 없으면 역할별 첫 화면으로 (판매자는 대시보드)
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
+  revalidatePath("/", "layout");
   redirect(safeNext(formData.get("next")) ?? roleHome(profile?.role ?? "consumer"));
 }
 
@@ -50,11 +52,14 @@ export async function signup(_: FormState, formData: FormData): Promise<FormStat
     return { error: "가입은 됐지만 이메일 인증이 필요해요. (시연용이면 Supabase에서 Confirm email 을 꺼주세요)" };
   }
 
+  revalidatePath("/", "layout");
   redirect(role === "seller" ? "/seller/settings?welcome=1" : "/");
 }
 
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // 헤더(루트 레이아웃)가 이전 계정으로 남지 않게
+  revalidatePath("/", "layout");
   redirect("/");
 }

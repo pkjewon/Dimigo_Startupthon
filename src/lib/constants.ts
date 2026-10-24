@@ -63,3 +63,59 @@ export function timeSlotName(id: string) {
 export const FEE_RATE = 0.05;
 
 export const MAX_REQUEST_IMAGES = 5;
+
+// ---------- 코디 모드 (supabase/migrations/0004_styling.sql) ----------
+export const OCCASIONS = [
+  { id: "daily", name: "일상", title: "데일리로 입을" },
+  { id: "school", name: "학교·출근", title: "학교·출근용" },
+  { id: "date", name: "데이트", title: "데이트에 입을" },
+  { id: "travel", name: "여행", title: "여행에 입을" },
+  { id: "special", name: "특별한 날", title: "특별한 날 입을" },
+] as const;
+
+export const TOP_SIZES = ["XS", "S", "M", "L", "XL", "2XL"] as const;
+
+export const FITS = [
+  { id: "over", name: "오버핏" },
+  { id: "regular", name: "정핏" },
+  { id: "slim", name: "슬림핏" },
+  { id: "relaxed", name: "편한 핏" },
+] as const;
+
+export const STYLE_KEYWORDS = [
+  { id: "minimal", name: "미니멀" },
+  { id: "vintage", name: "빈티지" },
+  { id: "street", name: "스트릿" },
+  { id: "casual", name: "캐주얼" },
+  { id: "classic", name: "클래식" },
+  { id: "sporty", name: "스포티" },
+] as const;
+
+export const BUDGET_PRESETS = [100000, 200000, 300000, 500000] as const;
+
+// 판매자 한 명이 한 코디에 묶을 수 있는 상품 수
+export const LOOK_MIN_ITEMS = 2;
+export const LOOK_MAX_ITEMS = 4;
+
+export function occasionName(id: string) {
+  return OCCASIONS.find((o) => o.id === id)?.name ?? id;
+}
+
+export function fitName(id: string) {
+  return FITS.find((f) => f.id === id)?.name ?? id;
+}
+
+export function styleName(id: string) {
+  return STYLE_KEYWORDS.find((s) => s.id === id)?.name ?? id;
+}
+
+export function conditionName(id: string | null) {
+  return PROPOSAL_CONDITIONS.find((c) => c.id === id)?.name ?? null;
+}
+
+// 코디 요청 제목: "데이트에 입을 미니멀 코디"
+export function stylingTitle(occasion: string, styles: string[]) {
+  const phrase = OCCASIONS.find((o) => o.id === occasion)?.title ?? "";
+  const style = styles[0] ? `${styleName(styles[0])} ` : "";
+  return `${phrase} ${style}코디`.trim();
+}

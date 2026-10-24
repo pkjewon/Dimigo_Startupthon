@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { LookButton } from "@/components/look-composer";
+import { LookCard, type LookCardData } from "@/components/look-card";
 import { ProposalCard, type ProposalCardData } from "@/components/proposal-card";
+import { BodyProfile, LockNote, PieceList, stylingTags } from "@/components/styling-profile";
 import { getCurrentUser } from "@/lib/auth";
-import { categoryName, requestConditionName, SELLER_TYPES } from "@/lib/constants";
+import { categoryName, fitName, occasionName, requestConditionName, SELLER_TYPES, styleName } from "@/lib/constants";
 import { timeAgo, won } from "@/lib/format";
+import { PROPOSAL_SELECT } from "@/lib/ratings";
 import { createClient } from "@/lib/supabase/server";
 import { VisitButton } from "@/components/visit-button";
-import type { Request, SellerProfile, Visit } from "@/lib/types";
+import type { Request, SellerProfile, StylingProfile, Visit } from "@/lib/types";
 import { startDm } from "./actions";
 import { ProposalButton } from "./proposal-form";
 import { WatchToggle } from "./watch-toggle";
@@ -22,7 +26,7 @@ const SORTS = [
 ] as const;
 
 function compareBy(sort: string) {
-  return (a: ProposalCardData, b: ProposalCardData) => {
+  return (a: LookCardData, b: LookCardData) => {
     if (sort === "price_asc") return a.price - b.price;
     if (sort === "price_desc") return b.price - a.price;
     if (sort === "rating") return (b.rating?.avg_score ?? 0) - (a.rating?.avg_score ?? 0);
@@ -40,7 +44,7 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
   const user = await getCurrentUser();
   const supabase = await createClient();
 
-  const [{ data: request }, { data: proposals }, { data: watch }, { data: mySellerProfile }] = await Promise.all([
+  const [{ data: request }, { data: proposals }, { data: watch }, { data: mySellerProfile }, { data: styling }] = await Promise.all([
     supabase
       .from("requests")
       .select("*, consumer:profiles!consumer_id(nickname)")
@@ -48,17 +52,20 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
       .maybeSingle<RequestDetail>(),
     supabase
       .from("proposals")
-      .select("*, seller:profiles!seller_id(nickname, seller_profile:seller_profiles(shop_name, seller_type, is_subscribed))")
+      .select(PROPOSAL_SELECT)
       .eq("request_id", id)
-      .returns<Omit<ProposalCardData, "rating">[]>(),
+      .returns<Omit<LookCardData, "rating">[]>(),
     user?.role === "consumer"
       ? supabase.from("watches").select("notify").eq("user_id", user.id).eq("request_id", id).maybeSingle()
       : Promise.resolve({ data: null }),
     user?.role === "seller"
       ? supabase.from("seller_profiles").select("*").eq("user_id", user.id).single<SellerProfile>()
       : Promise.resolve({ data: null }),
+    // 코디 요청의 체형 정보: RLS 로 요청자 본인과 판매자에게만 내려옴
+    supabase.from("styling_profiles").select("*").eq("request_id", id).maybeSingle<StylingProfile>(),
   ]);
   if (!request) notFound();
+  const isStyling = request.kind === "styling";
 
   // 판매자 평균 평점 + (소비자) 내 방문 예정
   const sellerIds = [...new Set((proposals ?? []).map((p) => p.seller_id))];
@@ -79,7 +86,7 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
   const ratingBySeller = new Map((ratings ?? []).map((r) => [r.seller_id, r]));
   const visitByProposal = new Map((visits ?? []).map((v) => [v.proposal_id, v]));
 
-  const all: ProposalCardData[] = (proposals ?? []).map((p) => ({ ...p, rating: ratingBySeller.get(p.seller_id) ?? null }));
+  const all: LookCardData[] = (proposals ?? []).map((p) => ({ ...p, rating: ratingBySeller.get(p.seller_id) ?? null }));
   const visible = typeFilter ? all.filter((p) => p.seller?.seller_profile?.seller_type === typeFilter) : all;
   // S-1: 구독 판매자 댓글이 위, 그 안과 나머지는 고른 기준으로 정렬
   const isSub = (p: ProposalCardData) => p.seller?.seller_profile?.is_subscribed ?? false;
@@ -97,22 +104,40 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
     return `/requests/${request.id}${qs ? `?${qs}` : ""}`;
   };
 
+  // 소비자에게만 보이는 제안 버튼들 (판매자 화면에는 없음)
+  const buyerActions = (p: LookCardData) =>
+    user?.role === "consumer" && (
+      <>
+        {p.seller?.seller_profile?.seller_type === "offline" && (
+          <VisitButton proposalId={p.id} shopName={p.seller.seller_profile.shop_name} visit={visitByProposal.get(p.id) ?? null} />
+        )}
+        <form action={startDm.bind(null, p.seller_id, p.id)}>
+          <button className="btn btn-light btn-sm">문의하기</button>
+        </form>
+        <Link href={`/checkout/${p.id}`} className="btn btn-sm">
+          {p.is_look ? "코디 전체 구매" : "바로 구매"}
+        </Link>
+      </>
+    );
+
   return (
     <>
       {query.created && (
         <p className="mt-6 bg-dark px-4 py-3 text-xs text-white">
-          요청을 등록했어요. 관심 카테고리 판매자들에게 알림을 보냈어요.
+          {isStyling ? "코디 요청을 올렸어요." : "요청을 등록했어요."} 관심 카테고리 판매자들에게 알림을 보냈어요.
         </p>
       )}
       <div className="subpage-intro">
         <div>
-          <div className="eyebrow">REQUEST / {categoryName(request.category_id)}</div>
+          <div className="eyebrow">
+            {isStyling ? "STYLING REQUEST" : "REQUEST"} / {categoryName(request.category_id)}
+          </div>
           <h1>{request.title}</h1>
           <p>
-            {nickname} · {timeAgo(request.created_at)} · 제안 {all.length}개
+            {nickname} · {timeAgo(request.created_at)} · {isStyling ? "코디" : "제안"} {all.length}개
           </p>
         </div>
-        <Link href="/" className="btn btn-light btn-sm">
+        <Link href={isStyling ? "/styling" : "/"} className="btn btn-light btn-sm">
           ← 목록으로
         </Link>
       </div>
@@ -130,6 +155,27 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
                 ))}
               </div>
             )}
+            {isStyling && (
+              <div className="mb-4 flex flex-col gap-3">
+                {styling ? (
+                  <>
+                    <div className="tags !mt-0">
+                      {stylingTags(styling).map((t) => (
+                        <span key={t} className="tag">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <BodyProfile profile={styling} />
+                    <LockNote>
+                      {isOwner ? "키와 사이즈는 나와 판매자에게만 보여요." : "체형 정보는 판매자에게만 보여요. 다른 소비자에게는 보이지 않아요."}
+                    </LockNote>
+                  </>
+                ) : (
+                  <LockNote>이 손님의 키와 사이즈는 판매자에게만 보여요.</LockNote>
+                )}
+              </div>
+            )}
             <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#444]">
               {request.body || "추가 설명이 없어요."}
             </p>
@@ -138,9 +184,9 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
           <section id="proposals">
             <div className="section-head !mb-4 pt-6">
               <div>
-                <div className="section-kicker">PROPOSALS</div>
+                <div className="section-kicker">{isStyling ? "LOOKS" : "PROPOSALS"}</div>
                 <h2 className="section-title">
-                  판매자 제안 <small>{all.length}개</small>
+                  {isStyling ? "판매자 코디" : "판매자 제안"} <small>{all.length}개</small>
                 </h2>
               </div>
             </div>
@@ -164,35 +210,20 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
               ))}
             </div>
 
-            <div className="flex flex-col gap-3">
-              {all.length === 0 && <div className="empty-state">아직 제안이 없어요. 판매자에게 알림이 갔어요!</div>}
+            <div className={isStyling ? "look-grid single" : "flex flex-col gap-3"}>
+              {all.length === 0 && (
+                <div className="empty-state">
+                  아직 {isStyling ? "도착한 코디가" : "제안이"} 없어요. 판매자에게 알림이 갔어요!
+                </div>
+              )}
               {all.length > 0 && sorted.length === 0 && <div className="empty-state">이 유형의 판매자 제안이 없어요.</div>}
-              {sorted.map((p) => (
-                <ProposalCard
-                  key={p.id}
-                  proposal={p}
-                  viewer={user}
-                  actions={
-                    user?.role === "consumer" && (
-                      <>
-                        {p.seller?.seller_profile?.seller_type === "offline" && (
-                          <VisitButton
-                            proposalId={p.id}
-                            shopName={p.seller.seller_profile.shop_name}
-                            visit={visitByProposal.get(p.id) ?? null}
-                          />
-                        )}
-                        <form action={startDm.bind(null, p.seller_id, p.id)}>
-                          <button className="btn btn-light btn-sm">문의하기</button>
-                        </form>
-                        <Link href={`/checkout/${p.id}`} className="btn btn-sm">
-                          바로 구매
-                        </Link>
-                      </>
-                    )
-                  }
-                />
-              ))}
+              {sorted.map((p) =>
+                p.is_look ? (
+                  <LookCard key={p.id} look={p} viewer={user} actions={buyerActions(p)} />
+                ) : (
+                  <ProposalCard key={p.id} proposal={p} viewer={user} actions={buyerActions(p)} />
+                ),
+              )}
             </div>
           </section>
         </div>
@@ -201,13 +232,29 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
           {mySellerProfile && (
             <div className="how-card">
               <div className="section-kicker">FOR SELLER</div>
-              <h3>이 요청에 맞는 상품이 있나요?</h3>
-              <ProposalButton
-                requestId={request.id}
-                requestTitle={request.title}
-                budgetMax={request.budget_max}
-                seller={mySellerProfile}
-              />
+              {isStyling && styling ? (
+                <>
+                  <h3>내 상품으로 이 손님의 한 벌을 만들어보세요.</h3>
+                  <LookButton
+                    requestId={request.id}
+                    requestTitle={request.title}
+                    summary={`${styling.height_cm}cm · ${styling.top_size} · ${styling.bottom_size} · ${fitName(styling.fit)}`}
+                    budgetMax={request.budget_max}
+                    pieces={styling.pieces}
+                    seller={mySellerProfile}
+                  />
+                </>
+              ) : (
+                <>
+                  <h3>이 요청에 맞는 상품이 있나요?</h3>
+                  <ProposalButton
+                    requestId={request.id}
+                    requestTitle={request.title}
+                    budgetMax={request.budget_max}
+                    seller={mySellerProfile}
+                  />
+                </>
+              )}
             </div>
           )}
           {user?.role === "consumer" && (
@@ -217,18 +264,39 @@ export default async function RequestDetailPage({ params, searchParams }: PagePr
             <div className="panel-title">
               <h2>요청 조건</h2>
             </div>
-            <dl className="grid grid-cols-[72px_1fr] gap-y-3 text-xs">
-              <dt className="text-muted">카테고리</dt>
-              <dd>{categoryName(request.category_id)}</dd>
-              <dt className="text-muted">예산</dt>
-              <dd className="font-bold">최대 {won(request.budget_max)}</dd>
-              <dt className="text-muted">브랜드</dt>
-              <dd>{request.brand ?? "-"}</dd>
-              <dt className="text-muted">사이즈</dt>
-              <dd>{request.size ?? "-"}</dd>
-              <dt className="text-muted">상품 상태</dt>
-              <dd>{request.conditions.length ? request.conditions.map(requestConditionName).join(", ") : "-"}</dd>
-            </dl>
+            {isStyling ? (
+              <dl className="grid grid-cols-[72px_1fr] gap-y-3 text-xs">
+                <dt className="text-muted">코디 예산</dt>
+                <dd className="font-bold">최대 {won(request.budget_max)}</dd>
+                <dt className="text-muted">중심 분야</dt>
+                <dd>{categoryName(request.category_id)}</dd>
+                {styling && (
+                  <>
+                    <dt className="text-muted">입을 상황</dt>
+                    <dd>{occasionName(styling.occasion)}</dd>
+                    <dt className="text-muted">스타일</dt>
+                    <dd>{styling.styles.length ? styling.styles.map(styleName).join(", ") : "-"}</dd>
+                    <dt className="text-muted">넣을 품목</dt>
+                    <dd>
+                      <PieceList pieces={styling.pieces} />
+                    </dd>
+                  </>
+                )}
+              </dl>
+            ) : (
+              <dl className="grid grid-cols-[72px_1fr] gap-y-3 text-xs">
+                <dt className="text-muted">카테고리</dt>
+                <dd>{categoryName(request.category_id)}</dd>
+                <dt className="text-muted">예산</dt>
+                <dd className="font-bold">최대 {won(request.budget_max)}</dd>
+                <dt className="text-muted">브랜드</dt>
+                <dd>{request.brand ?? "-"}</dd>
+                <dt className="text-muted">사이즈</dt>
+                <dd>{request.size ?? "-"}</dd>
+                <dt className="text-muted">상품 상태</dt>
+                <dd>{request.conditions.length ? request.conditions.map(requestConditionName).join(", ") : "-"}</dd>
+              </dl>
+            )}
           </div>
           {!user && (
             <div className="tip-card">

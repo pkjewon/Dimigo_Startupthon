@@ -40,6 +40,9 @@ export async function Header() {
           </Suspense>
 
           <div className="header-actions">
+            <Link href="/styling" className="text-action font-semibold text-ink">
+              코디 모드
+            </Link>
             {user?.role === "consumer" && (
               <Link href="/requests/new" className="text-action">
                 요청하기

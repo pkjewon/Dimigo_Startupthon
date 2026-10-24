@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { PROPOSAL_CONDITIONS, sellerTypeName } from "@/lib/constants";
+import { categoryName, PROPOSAL_CONDITIONS, sellerTypeName } from "@/lib/constants";
 import { won } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { CheckoutForm } from "./checkout-form";
@@ -14,6 +14,8 @@ type ProposalForCheckout = {
   condition: string | null;
   size_info: string | null;
   image_url: string | null;
+  is_look: boolean;
+  items: { position: number; category_id: string; product_name: string; price: number; size_info: string | null }[];
   seller: { nickname: string; seller_profile: { shop_name: string; seller_type: string } | null } | null;
 };
 
@@ -27,7 +29,7 @@ export default async function CheckoutPage({ params }: PageProps<"/checkout/[pro
   const { data: proposal } = await supabase
     .from("proposals")
     .select(
-      "id, request_id, product_name, price, condition, size_info, image_url, seller:profiles!seller_id(nickname, seller_profile:seller_profiles(shop_name, seller_type))",
+      "id, request_id, product_name, price, condition, size_info, image_url, is_look, items:look_items(position, category_id, product_name, price, size_info), seller:profiles!seller_id(nickname, seller_profile:seller_profiles(shop_name, seller_type))",
     )
     .eq("id", proposalId)
     .maybeSingle<ProposalForCheckout>();
@@ -41,7 +43,7 @@ export default async function CheckoutPage({ params }: PageProps<"/checkout/[pro
       <div className="subpage-intro">
         <div>
           <div className="eyebrow">CHECKOUT</div>
-          <h1>바로 구매</h1>
+          <h1>{proposal.is_look ? "코디 전체 구매" : "바로 구매"}</h1>
           <p>시연용 모의 결제예요. 실제로 돈이 나가지 않아요.</p>
         </div>
         <div className="stepper">
@@ -75,9 +77,27 @@ export default async function CheckoutPage({ params }: PageProps<"/checkout/[pro
                   {shop && ` · ${sellerTypeName(shop.seller_type)}`}
                 </p>
                 <p className="mt-1 font-bold">{proposal.product_name}</p>
-                <p className="mt-1 text-muted">{[condition, proposal.size_info].filter(Boolean).join(" · ")}</p>
+                <p className="mt-1 text-muted">
+                  {proposal.is_look ? `코디 · 상품 ${proposal.items.length}개` : [condition, proposal.size_info].filter(Boolean).join(" · ")}
+                </p>
               </div>
             </div>
+            {proposal.is_look && (
+              <div className="item-list !mb-0">
+                {[...proposal.items]
+                  .sort((a, b) => a.position - b.position)
+                  .map((item, i) => (
+                    <div key={item.position} className="item-row">
+                      <span>{String(i + 1).padStart(2, "0")}</span>
+                      <span className="min-w-0">
+                        <strong className="truncate">{item.product_name}</strong>
+                        <small>{[categoryName(item.category_id), item.size_info].filter(Boolean).join(" · ")}</small>
+                      </span>
+                      <b>{won(item.price)}</b>
+                    </div>
+                  ))}
+              </div>
+            )}
             <dl className="mt-5 grid grid-cols-[1fr_auto] gap-y-2 border-t border-line pt-4 text-xs">
               <dt className="text-muted">상품 금액</dt>
               <dd>{won(proposal.price)}</dd>

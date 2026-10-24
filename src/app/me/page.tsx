@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RequestCard, type RequestCardData } from "@/components/request-card";
+import { REQUEST_CARD_SELECT, RequestCard, type RequestCardData } from "@/components/request-card";
 import { requireUser } from "@/lib/auth";
 import { timeSlotName } from "@/lib/constants";
 import { shortDate, todayKst, won } from "@/lib/format";
@@ -21,7 +21,7 @@ type MyVisit = Visit & {
   } | null;
 };
 
-const REQUEST_SELECT = "*, consumer:profiles!consumer_id(nickname), proposals(count)";
+const REQUEST_SELECT = REQUEST_CARD_SELECT;
 
 // 13번 화면: 소비자 마이페이지 (내 요청글, 주문 내역, 알림 켠 글)
 export default async function MyPage() {

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RequestCard, type RequestCardData } from "@/components/request-card";
+import { REQUEST_CARD_SELECT, RequestCard, type RequestCardData } from "@/components/request-card";
 import { requireUser } from "@/lib/auth";
 import { confirmVisit } from "@/app/visits/actions";
 import { categoryName, timeSlotName } from "@/lib/constants";
@@ -9,6 +9,7 @@ import type { SellerProfile, Visit } from "@/lib/types";
 
 type MyProposal = {
   id: number;
+  is_look: boolean;
   product_name: string;
   price: number;
   created_at: string;
@@ -29,7 +30,15 @@ type ReceivedOrder = {
 };
 
 // 12번 화면: 판매자 대시보드 (M-2)
-export default async function SellerDashboardPage() {
+const KIND_FILTERS = [
+  { id: "", name: "전체 요청" },
+  { id: "styling", name: "코디 요청" },
+  { id: "item", name: "일반 요청" },
+] as const;
+
+export default async function SellerDashboardPage({ searchParams }: PageProps<"/seller/dashboard">) {
+  const { kind: kindParam } = await searchParams;
+  const kind = kindParam === "styling" || kindParam === "item" ? kindParam : "";
   const user = await requireUser("seller", "/seller/dashboard");
   const supabase = await createClient();
 
@@ -38,19 +47,19 @@ export default async function SellerDashboardPage() {
 
   const isOffline = profile?.seller_type === "offline";
 
+  let requestQuery = supabase
+    .from("requests")
+    .select(REQUEST_CARD_SELECT)
+    .in("category_id", interests)
+    .order("created_at", { ascending: false })
+    .limit(9);
+  if (kind) requestQuery = requestQuery.eq("kind", kind);
+
   const [{ data: requests }, { data: proposals }, { data: orders }, { data: visits }] = await Promise.all([
-    interests.length
-      ? supabase
-          .from("requests")
-          .select("*, consumer:profiles!consumer_id(nickname), proposals(count)")
-          .in("category_id", interests)
-          .order("created_at", { ascending: false })
-          .limit(9)
-          .returns<RequestCardData[]>()
-      : Promise.resolve({ data: [] as RequestCardData[] }),
+    interests.length ? requestQuery.returns<RequestCardData[]>() : Promise.resolve({ data: [] as RequestCardData[] }),
     supabase
       .from("proposals")
-      .select("id, product_name, price, created_at, request:requests(id, title)")
+      .select("id, is_look, product_name, price, created_at, request:requests(id, title)")
       .eq("seller_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20)
@@ -149,6 +158,16 @@ export default async function SellerDashboardPage() {
             </h2>
           </div>
         </div>
+        <div className="filter-bar">
+          {KIND_FILTERS.map((f) => (
+            <Link key={f.id} href={f.id ? `/seller/dashboard?kind=${f.id}` : "/seller/dashboard"} scroll={false} className={`filter-chip ${kind === f.id ? "active" : ""}`}>
+              {f.name}
+            </Link>
+          ))}
+          <Link href="/styling" className="ml-auto text-[10px] text-muted underline underline-offset-4">
+            코디 모드에서 보기 →
+          </Link>
+        </div>
         <div className="request-grid">
           {requests?.length === 0 && (
             <div className="empty-state">
@@ -175,7 +194,10 @@ export default async function SellerDashboardPage() {
               <li key={p.id}>
                 <Link href={`/requests/${p.request?.id}`} className="panel flex items-center justify-between gap-3 !py-3 text-xs hover:border-[#aaa]">
                   <span className="min-w-0">
-                    <span className="block truncate font-bold">{p.product_name}</span>
+                    <span className="block truncate font-bold">
+                      {p.is_look && <span className="tag tag-dark mr-1.5 !py-0.5">코디</span>}
+                      {p.product_name}
+                    </span>
                     <span className="mt-1 block truncate text-[11px] text-muted">“{p.request?.title}”</span>
                   </span>
                   <span className="flex-none text-right">

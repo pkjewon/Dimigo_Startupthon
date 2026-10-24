@@ -24,3 +24,7 @@ export function timeAgo(iso: string) {
   if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}일 전`;
   return new Date(iso).toLocaleDateString("ko-KR");
 }
+
+export function isWithinDays(iso: string, days: number) {
+  return Date.now() - new Date(iso).getTime() < days * 24 * 3600 * 1000;
+}

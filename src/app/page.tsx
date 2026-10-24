@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { RequestCard, type RequestCardData } from "@/components/request-card";
+import { REQUEST_CARD_SELECT, RequestCard, type RequestCardData } from "@/components/request-card";
 import { getCurrentUser } from "@/lib/auth";
 import { CATEGORIES, categoryName } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
@@ -8,15 +8,17 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const params = await searchParams;
   const category = typeof params.category === "string" ? params.category : "";
   const q = typeof params.q === "string" ? params.q.trim() : "";
+  const kind = params.kind === "styling" || params.kind === "item" ? params.kind : "";
   const user = await getCurrentUser();
 
   const supabase = await createClient();
   let query = supabase
     .from("requests")
-    .select("*, consumer:profiles!consumer_id(nickname), proposals(count)")
+    .select(REQUEST_CARD_SELECT)
     .order("created_at", { ascending: false })
     .limit(60);
   if (CATEGORIES.some((c) => c.id === category)) query = query.eq("category_id", category);
+  if (kind) query = query.eq("kind", kind);
   if (q) {
     // PostgREST or 필터 문법을 깨뜨리는 문자는 제거
     const term = q.replace(/[,()%*\\]/g, " ");
@@ -26,7 +28,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
 
   const isSeller = user?.role === "seller";
   const ctaHref = isSeller ? "/seller/settings" : user ? "/requests/new" : "/signup";
-  const filtered = category || q;
+  const filtered = category || q || kind;
 
   return (
     <>
@@ -47,8 +49,8 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
                 <a href="#feed" className="btn">
                   제안할 요청 보기 →
                 </a>
-                <Link href="/seller/dashboard" className="btn btn-light">
-                  대시보드
+                <Link href="/styling" className="btn btn-light">
+                  코디 요청 보기
                 </Link>
               </div>
             </div>
@@ -67,9 +69,9 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
                 <Link href={user ? "/requests/new" : "/login?next=/requests/new"} className="btn">
                   원하는 옷 요청하기 →
                 </Link>
-                <a href="#feed" className="btn btn-light">
-                  요청 둘러보기
-                </a>
+                <Link href="/styling" className="btn btn-light">
+                  코디 추천 받기
+                </Link>
               </div>
             </div>
           )}
@@ -82,16 +84,20 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           <div>
             <div className="section-kicker">OPEN REQUESTS</div>
             <h2 className="section-title">
-              {q ? `"${q}" 검색 결과` : category ? `${categoryName(category)} 요청` : "지금 찾는 옷"}
+              {q ? `"${q}" 검색 결과` : kind === "styling" ? "코디 요청" : category ? `${categoryName(category)} 요청` : "지금 찾는 옷"}
               <small>{isSeller ? "내 상품으로 제안해보세요" : "판매자의 제안을 기다리고 있어요"}</small>
             </h2>
           </div>
         </div>
 
         <div className="filter-bar">
-          <Link href="/" className={`filter-chip ${!category ? "active" : ""}`}>
+          <Link href="/" className={`filter-chip ${!category && !kind ? "active" : ""}`}>
             전체
           </Link>
+          <Link href="/?kind=styling" className={`filter-chip ${kind === "styling" ? "active" : ""}`}>
+            코디 요청
+          </Link>
+          <span className="mx-1 h-4 w-px bg-line" aria-hidden="true" />
           {CATEGORIES.map((c) => (
             <Link key={c.id} href={`/?category=${c.id}`} className={`filter-chip ${category === c.id ? "active" : ""}`}>
               {c.name}

@@ -1,0 +1,1507 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f5f5f3" />
+  <title>FLIP — Find what you feel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap');
+    :root {
+      --ink: #161616;
+      --muted: #777874;
+      --line: #e5e5e2;
+      --paper: #f6f6f4;
+      --white: #fff;
+      --soft: #eeeeeb;
+      --dark: #171817;
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'DM Sans','Noto Sans KR',sans-serif; -webkit-font-smoothing: antialiased; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .announcement { height: 31px; display:flex; align-items:center; justify-content:center; gap:8px; background:#181918; color:#f5f5f3; font-size:10px; letter-spacing:.16em; text-transform:uppercase; }
+    .announcement b { color:#c9c9c5; font-weight:500; }
+    .site-header { background:rgba(246,246,244,.96); position:sticky; top:0; z-index:30; border-bottom:1px solid var(--line); backdrop-filter:blur(14px); }
+    .header-main { max-width:1440px; height:78px; margin:auto; padding:0 42px; display:grid; grid-template-columns:1fr minmax(240px,430px) 1fr; align-items:center; gap:32px; }
+    .brand { color:var(--ink); text-decoration:none; display:flex; align-items:center; gap:10px; width:max-content; }
+    .brand-mark { display:block; width:78px; height:60px; flex:none; object-fit:contain; }
+    .brand-name { font:800 21px Manrope,sans-serif; letter-spacing:.16em; }
+    .brand-sub { font-size:8px; color:#8b8c88; letter-spacing:.11em; margin-top:2px; }
+    .search { position:relative; }
+    .search input { width:100%; height:42px; border:1px solid #dededb; background:#fff; border-radius:999px; padding:0 46px 0 18px; outline:none; font-size:12px; transition:.2s; }
+    .search input:focus { border-color:#777; box-shadow:0 0 0 3px #1718170c; }
+    .search input::placeholder { color:#999a96; }
+    .search button { position:absolute; right:5px; top:5px; width:32px; height:32px; border:0; border-radius:50%; background:#171817; color:white; display:grid; place-items:center; }
+    .search-suggestions { position:absolute; z-index:60; top:calc(100% + 9px); left:0; right:0; display:none; max-height:min(420px,65vh); overflow:auto; border:1px solid #e4e3df; background:#fff; box-shadow:0 16px 40px #17171618; padding:7px; }
+    .search-suggestions.open { display:block; }
+    .suggestion-heading { padding:9px 11px 7px; color:#999890; font-size:8px; letter-spacing:.15em; }
+    .suggestion-row { position:static !important; width:100% !important; height:auto !important; min-height:43px; display:flex !important; align-items:center; gap:11px; border:0 !important; border-radius:0 !important; padding:8px 11px !important; background:transparent !important; color:#242420 !important; text-align:left; }
+    .suggestion-row:hover,.suggestion-row[aria-selected="true"] { background:#f1f0ec !important; }
+    .suggestion-icon { width:25px; height:25px; flex:none; display:grid; place-items:center; border:1px solid #e6e5e0; border-radius:50%; color:#777772; font-size:12px; }
+    .suggestion-copy { min-width:0; flex:1; }
+    .suggestion-copy strong { display:block; overflow:hidden; font-size:10px; font-weight:500; text-overflow:ellipsis; white-space:nowrap; }
+    .suggestion-copy small { display:block; margin-top:3px; color:#999890; font-size:8px; }
+    .suggestion-kind { flex:none; color:#999890; font-size:8px; }
+    .header-actions { display:flex; justify-content:flex-end; align-items:center; gap:20px; font-size:11px; color:#444; }
+    .text-action { border:0; background:none; color:inherit; padding:6px 0; }
+    .icon-action { width:28px; height:32px; border:0; background:none; color:var(--ink); position:relative; display:grid; place-items:center; }
+    .icon-action svg { width:19px; height:19px; }
+    .badge { position:absolute; top:0; right:-3px; min-width:14px; height:14px; border-radius:10px; background:#171817; color:#fff; font-size:9px; display:grid; place-items:center; padding:0 3px; }
+    .main-nav { max-width:1440px; margin:auto; height:54px; padding:0 42px; display:flex; align-items:center; gap:34px; }
+    .nav-link { border:0; background:none; height:100%; display:flex; align-items:center; position:relative; text-decoration:none; color:#777874; font-size:11px; letter-spacing:.07em; font-weight:600; transition:.2s; }
+    .nav-link:hover, .nav-link.active { color:var(--ink); }
+    .nav-link.active:after { content:""; position:absolute; height:2px; bottom:0; left:0; right:0; background:#171817; }
+    .nav-spacer { flex:1; }
+    .nav-note { font-size:10px; color:#9b9c98; letter-spacing:.08em; }
+    main { max-width:1440px; margin:auto; padding:0 42px 90px; }
+    .page { display:none; }
+    .page.active { display:block; animation:fade .35s ease both; }
+    @keyframes fade { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+    .hero { min-height:445px; margin:7px 0 58px; display:grid; grid-template-columns:1.02fr .98fr; background:#e9e9e6; overflow:hidden; border-radius:3px; position:relative; }
+    .hero-copy { padding:56px 48px 44px 56px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; position:relative; z-index:2; }
+    .eyebrow { font-size:10px; text-transform:uppercase; letter-spacing:.22em; color:#777873; display:flex; align-items:center; gap:9px; margin-bottom:25px; }
+    .eyebrow:before { content:""; width:21px; height:1px; background:#777873; }
+    .hero h1 { font:600 clamp(40px,5.1vw,70px)/1.07 Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.075em; margin:0; max-width:590px; }
+    .hero h1 em { font-style:normal; font-weight:400; color:#696a66; }
+    .hero-desc { max-width:380px; color:#777873; font-size:13px; line-height:1.8; margin:22px 0 29px; word-break:keep-all; }
+    .button-row { display:flex; gap:9px; align-items:center; }
+    .btn { min-height:45px; padding:0 19px; display:inline-flex; justify-content:center; align-items:center; gap:10px; border:1px solid #171817; background:#171817; color:white; border-radius:2px; text-decoration:none; font-size:11px; font-weight:600; transition:.2s; }
+    .btn:hover { background:#393a38; border-color:#393a38; transform:translateY(-1px); }
+    .btn-light { background:transparent; color:#171817; }
+    .btn-light:hover { color:white; }
+    .btn svg { width:14px; height:14px; }
+    .hero-visual { min-height:445px; position:relative; background:#d6d6d1; overflow:hidden; }
+    .hero-image { position:absolute; inset:0; background:linear-gradient(90deg,#d9d9d4 0%,transparent 34%),url('https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=1200&q=85') center 37%/cover; filter:grayscale(80%); }
+    .hero-image:after { content:""; position:absolute; inset:0; background:linear-gradient(0deg,rgba(17,17,17,.26),transparent 53%),linear-gradient(90deg,rgba(233,233,230,.5),transparent 43%); }
+    .hero-label { position:absolute; right:25px; top:24px; color:white; font-size:9px; letter-spacing:.18em; writing-mode:vertical-rl; }
+    .hero-caption { position:absolute; bottom:25px; left:28px; right:28px; color:white; display:flex; align-items:flex-end; justify-content:space-between; }
+    .hero-caption strong { font-size:13px; letter-spacing:.04em; font-weight:500; }
+    .hero-caption span { font-size:9px; letter-spacing:.16em; opacity:.85; }
+    .hero-bubble { position:absolute; z-index:2; left:-26px; bottom:34px; width:112px; height:112px; background:#f8f8f6; border-radius:50%; display:flex; align-items:center; justify-content:center; text-align:center; font-size:10px; line-height:1.55; letter-spacing:.04em; transform:rotate(-9deg); box-shadow:0 9px 35px #00000012; }
+    .hero-bubble b { font:700 21px Manrope,sans-serif; display:block; letter-spacing:-.08em; }
+    .section { margin:0 0 64px; }
+    .section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:22px; }
+    .section-kicker { font-size:9px; color:#9a9b96; letter-spacing:.2em; text-transform:uppercase; margin-bottom:8px; }
+    .section-title { margin:0; font:700 25px/1.2 Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.055em; }
+    .section-title small { font:400 11px 'Noto Sans KR',sans-serif; letter-spacing:0; color:#888984; margin-left:9px; }
+    .view-all { border:0; background:none; padding:6px 0; color:#646560; font-size:10px; display:flex; align-items:center; gap:9px; }
+    .view-all:hover { color:#111; }
+    .product-row { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
+    .product-card { min-width:0; cursor:pointer; }
+    .product-image { aspect-ratio:.77; background:#e5e5e1; position:relative; overflow:hidden; border-radius:2px; }
+    .product-image img { width:100%; height:100%; object-fit:cover; display:block; filter:grayscale(28%); transition:transform .5s cubic-bezier(.2,.7,.2,1),filter .3s; }
+    .product-card:hover .product-image img { transform:scale(1.045); filter:grayscale(0); }
+    .product-image .heart { position:absolute; top:11px; right:11px; width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:#ffffffd9; border:0; color:#333; }
+    .heart svg { width:15px; height:15px; }
+    .heart.saved { color:#111; }
+    .heart.saved svg { fill:#171817; }
+    .product-label { position:absolute; left:9px; top:9px; background:#171817; color:#fff; padding:5px 7px; font-size:8px; letter-spacing:.08em; text-transform:uppercase; }
+    .product-meta { padding:11px 1px 0; }
+    .product-brand { font-size:10px; font-weight:700; letter-spacing:.04em; margin-bottom:4px; }
+    .product-name { font-size:10px; color:#777873; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .product-price { font-size:11px; font-weight:700; margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
+    .product-price small { font-size:9px; font-weight:400; color:#999a96; }
+    .daily-banner { background:#1d1e1d; color:white; min-height:174px; display:flex; align-items:center; justify-content:space-between; padding:34px 44px; margin:4px 0 60px; position:relative; overflow:hidden; }
+    .daily-banner:after { content:"M"; position:absolute; right:15%; top:-112px; font:800 300px Manrope,sans-serif; color:#ffffff08; letter-spacing:-.13em; }
+    .daily-banner .eyebrow { color:#a7a8a3; margin-bottom:13px; }
+    .daily-banner h2 { font:600 27px/1.25 Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.05em; margin:0; }
+    .daily-banner p { color:#aaa; font-size:11px; margin:10px 0 0; }
+    .daily-banner .btn { background:#f4f4f1; color:#171817; border-color:#f4f4f1; position:relative; z-index:1; }
+    .daily-banner .btn:hover { background:#d9d9d5; }
+    .request-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; }
+    .request-card { background:#fff; padding:20px; border:1px solid #ebebe8; transition:.2s; cursor:pointer; }
+    .request-card:hover { border-color:#aaa; transform:translateY(-2px); }
+    .request-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:17px; }
+    .avatar { width:27px; height:27px; border-radius:50%; display:grid; place-items:center; color:#fff; background:#6e706d; font-size:9px; font-weight:700; }
+    .request-user { margin-left:8px; font-size:10px; color:#696a66; flex:1; }
+    .request-time { font-size:9px; color:#a0a19c; }
+    .request-card h3 { font-size:14px; margin:0 0 7px; letter-spacing:-.03em; }
+    .request-card p { font-size:10px; line-height:1.65; color:#83847f; margin:0; }
+    .tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:14px; }
+    .tag { font-size:9px; color:#666762; background:#f1f1ef; padding:6px 8px; border-radius:2px; }
+    .request-foot { margin-top:18px; padding-top:13px; border-top:1px solid #efefec; display:flex; justify-content:space-between; align-items:center; font-size:10px; }
+    .request-foot strong { font-size:12px; }
+    .request-foot span { color:#90918c; }
+    .editorial { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .editorial-card { min-height:240px; position:relative; overflow:hidden; background:#ddd; color:#fff; display:flex; align-items:flex-end; padding:25px; }
+    .editorial-card img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:grayscale(70%); transition:.5s; }
+    .editorial-card:hover img { transform:scale(1.04); filter:grayscale(20%); }
+    .editorial-card:after { content:""; position:absolute; inset:0; background:linear-gradient(0deg,#111a,transparent 75%); }
+    .editorial-copy { position:relative; z-index:1; }
+    .editorial-copy span { font-size:9px; letter-spacing:.18em; text-transform:uppercase; }
+    .editorial-copy h3 { margin:7px 0 0; font:600 20px Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.04em; }
+    .footer { border-top:1px solid var(--line); padding:28px 0 5px; display:flex; justify-content:space-between; color:#8b8c87; font-size:9px; letter-spacing:.04em; }
+
+    /* Customer */
+    .subpage-intro { padding:39px 0 27px; border-bottom:1px solid var(--line); display:flex; align-items:flex-end; justify-content:space-between; gap:20px; }
+    .subpage-intro .eyebrow { margin-bottom:13px; }
+    .subpage-intro h1 { margin:0; font:600 clamp(30px,4vw,48px)/1.12 Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.07em; }
+    .subpage-intro p { color:#777873; font-size:11px; margin:10px 0 0; }
+    .stepper { display:flex; align-items:center; gap:11px; color:#9a9b96; font-size:9px; letter-spacing:.06em; padding-bottom:6px; }
+    .stepper b { color:#171817; font-weight:600; }
+    .step-dot { width:5px; height:5px; border-radius:50%; background:#d0d1cd; }
+    .customer-layout { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(300px,.75fr); gap:20px; padding-top:27px; }
+    .panel { background:#fff; border:1px solid #e9e9e6; padding:25px; }
+    .panel-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:19px; }
+    .panel-title h2 { margin:0; font-size:14px; letter-spacing:-.03em; }
+    .panel-title span { font-size:9px; color:#92938e; }
+    .upload-zone { min-height:137px; border:1px dashed #c9cac6; background:#fafaf9; display:flex; align-items:center; justify-content:center; text-align:center; color:#7b7c77; position:relative; transition:.2s; }
+    .upload-zone:hover { border-color:#555; background:#f6f6f4; }
+    .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; }
+    .upload-zone svg { display:block; margin:0 auto 9px; width:23px; height:23px; color:#555; }
+    .upload-zone strong { display:block; color:#333; font-size:11px; margin-bottom:5px; }
+    .upload-zone small { font-size:9px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:13px 12px; margin-top:18px; }
+    .field { display:flex; flex-direction:column; gap:7px; }
+    .field.full { grid-column:1/-1; }
+    .field label { font-size:10px; color:#555650; font-weight:600; }
+    .field input, .field select, .field textarea { min-width:0; border:1px solid #e5e5e2; background:#fff; outline:none; padding:11px 12px; font-size:10px; color:#222; border-radius:2px; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color:#7e7f7a; }
+    .field textarea { min-height:86px; resize:vertical; line-height:1.6; }
+    .field input::placeholder, .field textarea::placeholder { color:#b0b1ac; }
+    .field-help { color:#9b9c97; font-size:9px; line-height:1.5; }
+    .checks { display:flex; flex-wrap:wrap; gap:7px; }
+    .check-chip { border:1px solid #e5e5e2; padding:8px 10px; font-size:9px; color:#777; cursor:pointer; }
+    .check-chip.selected { border-color:#171817; color:#171817; background:#f3f3f1; }
+    .privacy-note { display:flex; gap:8px; align-items:flex-start; background:#f5f5f3; padding:12px; margin-top:17px; font-size:9px; color:#777; line-height:1.6; }
+    .privacy-note svg { width:15px; height:15px; flex:none; }
+    .form-submit { margin-top:18px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .form-submit small { color:#999; font-size:9px; }
+    .side-panel { display:flex; flex-direction:column; gap:13px; }
+    .how-card { background:#1b1c1b; color:white; padding:23px; }
+    .how-card .section-kicker { color:#a6a7a2; }
+    .how-card h3 { font:600 20px/1.35 Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.04em; margin:8px 0 17px; }
+    .how-step { display:grid; grid-template-columns:25px 1fr; gap:8px; padding:12px 0; border-top:1px solid #ffffff20; }
+    .how-step b { color:#a7a8a3; font-size:9px; }
+    .how-step span { font-size:10px; color:#e0e0dc; line-height:1.5; }
+    .tip-card { padding:20px; background:#e9e9e6; }
+    .tip-card h3 { margin:0 0 8px; font-size:12px; }
+    .tip-card p { margin:0; color:#777873; font-size:10px; line-height:1.65; }
+    .example-card { background:#fff; border:1px solid #e9e9e6; padding:20px; }
+    .example-card .example-head { display:flex; justify-content:space-between; align-items:center; font-size:10px; margin-bottom:14px; }
+    .example-card .example-head small { color:#999; }
+    .example-item { display:flex; align-items:center; gap:12px; }
+    .example-thumb { width:54px; height:64px; background:#e5e5e1; overflow:hidden; }
+    .example-thumb img { width:100%; height:100%; object-fit:cover; filter:grayscale(45%); }
+    .example-item b { display:block; font-size:10px; margin-bottom:5px; }
+    .example-item small { font-size:9px; color:#888; }
+    .example-count { margin-left:auto; text-align:right; }
+    .example-count strong { display:block; font:700 19px Manrope,sans-serif; }
+    .example-count small { font-size:8px; color:#999; }
+    .customer-more { margin-top:46px; }
+
+    /* Seller */
+    .seller-toolbar { padding:22px 0; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--line); }
+    .filter-chip { background:transparent; border:1px solid #dededb; padding:9px 12px; border-radius:999px; font-size:9px; color:#696a65; transition:.15s; }
+    .filter-chip:hover, .filter-chip.active { background:#171817; color:#fff; border-color:#171817; }
+    .seller-toolbar .sort { margin-left:auto; border:0; background:transparent; color:#777; font-size:10px; }
+    .seller-note { margin:20px 0; background:#eaeae7; padding:15px 18px; display:flex; align-items:center; gap:12px; color:#555; font-size:10px; line-height:1.5; }
+    .seller-note svg { width:18px; height:18px; flex:none; }
+    .seller-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .seller-request { display:grid; grid-template-columns:130px 1fr; gap:16px; padding:13px; border:1px solid #e8e8e5; background:#fff; transition:.2s; }
+    .seller-request:hover { border-color:#a5a6a1; }
+    .seller-request-photo { width:100%; height:155px; background:#e8e8e4; overflow:hidden; position:relative; }
+    .seller-request-photo img { width:100%; height:100%; object-fit:cover; filter:grayscale(42%); }
+    .seller-request-photo span { position:absolute; left:7px; top:7px; color:#fff; background:#191a19; padding:5px 7px; font-size:8px; }
+    .seller-request-info { display:flex; flex-direction:column; align-items:flex-start; min-width:0; padding:4px 2px 1px 0; }
+    .seller-request-info .request-user { margin:0 0 11px; }
+    .seller-request-info h3 { margin:0 0 6px; font-size:13px; letter-spacing:-.03em; }
+    .seller-request-info p { margin:0; color:#81827d; font-size:9px; line-height:1.55; }
+    .seller-request-info .tags { margin-top:10px; gap:4px; }
+    .seller-request-info .tag { padding:5px 6px; font-size:8px; }
+    .seller-request-bottom { width:100%; display:flex; justify-content:space-between; align-items:flex-end; margin-top:auto; padding-top:10px; }
+    .seller-budget small { display:block; color:#9a9b96; font-size:8px; margin-bottom:3px; }
+    .seller-budget strong { font-size:13px; }
+    .seller-respond { border:1px solid #171817; color:#171817; background:transparent; padding:9px 11px; font-size:9px; transition:.15s; }
+    .seller-respond:hover { background:#171817; color:#fff; }
+    .seller-bottom { margin-top:40px; padding:27px; background:#1c1d1c; color:white; display:flex; justify-content:space-between; align-items:center; }
+    .seller-bottom h2 { margin:0; font:600 20px Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.05em; }
+    .seller-bottom p { margin:7px 0 0; color:#a8a9a4; font-size:10px; }
+    .seller-bottom .btn { background:#f5f5f3; border-color:#f5f5f3; color:#171817; }
+    .empty-state { grid-column:1/-1; padding:48px; text-align:center; color:#888; border:1px dashed #d7d8d4; font-size:11px; }
+
+    /* modal/toast */
+    .modal-backdrop { position:fixed; z-index:80; inset:0; padding:20px; display:none; align-items:center; justify-content:center; background:#1118; backdrop-filter:blur(4px); }
+    .modal-backdrop.open { display:flex; }
+    .modal { width:min(520px,100%); max-height:90vh; overflow:auto; background:#f8f8f6; padding:28px; position:relative; box-shadow:0 20px 80px #0003; }
+    .modal-close { position:absolute; right:18px; top:17px; width:30px; height:30px; background:transparent; border:0; font-size:20px; }
+    .modal h2 { font:700 24px Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.06em; margin:0 35px 7px 0; }
+    .modal > p { color:#858681; font-size:10px; margin:0 0 22px; line-height:1.6; }
+    .modal-request { display:flex; gap:12px; padding:12px; background:#ecece9; margin-bottom:17px; }
+    .modal-request img { width:58px; height:68px; object-fit:cover; filter:grayscale(35%); }
+    .modal-request div { align-self:center; }
+    .modal-request b { display:block; font-size:11px; margin-bottom:5px; }
+    .modal-request small { color:#7c7d78; font-size:9px; }
+    .modal .field { margin-bottom:13px; }
+    .toast { position:fixed; z-index:100; left:50%; bottom:28px; transform:translate(-50%,20px); opacity:0; pointer-events:none; background:#171817; color:#fff; padding:13px 18px; font-size:10px; box-shadow:0 8px 30px #0002; transition:.25s; white-space:nowrap; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    .mobile-menu { display:none; }
+
+    /* My page */
+    .mypage-intro { padding:42px 0 22px; border-bottom:1px solid var(--line); }
+    .mypage-intro .eyebrow { margin-bottom:12px; }
+    .mypage-intro h1 { margin:0; font:600 clamp(30px,4vw,46px)/1.12 Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.07em; }
+    .mypage-intro p { margin:9px 0 0; color:#777772; font-size:11px; }
+    .mypage-profile { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(350px,.9fr); align-items:center; gap:25px; margin:24px 0 27px; padding:24px 27px; background:#1a1a19; color:#f7f6f2; }
+    .mypage-identity { display:flex; align-items:center; gap:15px; min-width:0; }
+    .mypage-avatar { width:55px; height:55px; flex:none; display:grid; place-items:center; background:#f0efeb; color:#1a1a19; font:700 18px Manrope,sans-serif; }
+    .mypage-identity small { display:block; color:#aaa9a2; font-size:8px; letter-spacing:.18em; margin-bottom:5px; }
+    .mypage-identity strong { display:block; font-size:15px; letter-spacing:-.03em; }
+    .mypage-identity p { margin:5px 0 0; color:#b4b3ad; font-size:9px; }
+    .mypage-profile-edit { margin-left:auto; border:1px solid #77766f; padding:9px 12px; background:transparent; color:#f7f6f2; font-size:9px; white-space:nowrap; }
+    .mypage-profile-edit:hover { background:#f7f6f2; color:#1a1a19; }
+    .mypage-metrics { display:grid; grid-template-columns:repeat(3,1fr); border-left:1px solid #4a4944; }
+    .mypage-metric { display:flex; flex-direction:column; gap:8px; padding:3px 19px; border-right:1px solid #4a4944; }
+    .mypage-metric span { color:#b6b5ae; font-size:9px; }
+    .mypage-metric strong { font:600 22px Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.05em; }
+    .mypage-layout { display:grid; grid-template-columns:190px minmax(0,1fr); gap:35px; align-items:start; }
+    .mypage-sidebar { position:sticky; top:190px; display:flex; flex-direction:column; border-top:1px solid #deddd8; }
+    .mypage-tab { min-height:44px; display:flex; align-items:center; justify-content:space-between; border:0; border-bottom:1px solid #e7e6e1; padding:0 12px; background:transparent; color:#777772; text-align:left; font-size:10px; transition:.16s; }
+    .mypage-tab:hover,.mypage-tab.active { color:#171716; background:#eae9e5; font-weight:700; }
+    .mypage-tab span { color:#96958e; font-size:9px; }
+    .mypage-sidebar-note { margin-top:18px; padding:14px; background:#ebeae6; color:#777772; font-size:9px; line-height:1.65; }
+    .mypage-panel { display:none; min-width:0; }
+    .mypage-panel.active { display:block; animation:fade .25s ease both; }
+    .mypage-panel-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:16px; }
+    .mypage-panel-head h2 { margin:0; font-size:18px; letter-spacing:-.05em; }
+    .mypage-panel-head p { margin:5px 0 0; color:#88877f; font-size:9px; }
+    .mypage-link { border:0; background:transparent; color:#5d5c56; font-size:9px; white-space:nowrap; }
+    .mypage-link:hover { color:#111; text-decoration:underline; text-underline-offset:3px; }
+    .mypage-columns { display:grid; grid-template-columns:1.1fr .9fr; gap:14px; }
+    .mypage-card { min-width:0; border:1px solid #e6e5e0; background:#fff; padding:18px; }
+    .mypage-card-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px; }
+    .mypage-card-title strong { font-size:11px; }
+    .mypage-card-title small { color:#96958e; font-size:8px; }
+    .mypage-list { display:flex; flex-direction:column; }
+    .mypage-list-row { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; padding:13px 0; border-top:1px solid #eeede9; }
+    .mypage-list-row:first-child { border-top:0; padding-top:0; }
+    .mypage-list-row:last-child { padding-bottom:0; }
+    .mypage-item-main { min-width:0; }
+    .mypage-item-main small { display:block; margin-bottom:5px; color:#8b8a83; font-size:8px; }
+    .mypage-item-main strong { display:block; overflow:hidden; color:#242420; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+    .mypage-item-main span { display:block; margin-top:5px; color:#88877f; font-size:8px; }
+    .mypage-status { padding:6px 8px; background:#efeee9; color:#5c5b55; font-size:8px; white-space:nowrap; }
+    .mypage-status.strong { background:#1a1a19; color:#fff; }
+    .mypage-quicklinks { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:14px; }
+    .mypage-quicklink { display:flex; align-items:center; justify-content:space-between; min-height:62px; border:1px solid #e6e5e0; padding:13px 15px; background:#f8f7f4; color:#242420; text-align:left; font-size:10px; }
+    .mypage-quicklink:hover { border-color:#aaa9a2; background:#fff; }
+    .mypage-quicklink span { color:#898880; font-size:14px; }
+    .mypage-offer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .mypage-offer-card { display:grid; grid-template-columns:88px minmax(0,1fr); gap:13px; border:1px solid #e6e5e0; padding:12px; background:#fff; }
+    .mypage-offer-card img { width:88px; height:108px; object-fit:cover; filter:grayscale(40%); }
+    .mypage-offer-info { display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+    .mypage-offer-info small { color:#8b8a83; font-size:8px; }
+    .mypage-offer-info strong { margin-top:6px; font-size:10px; line-height:1.5; }
+    .mypage-offer-info span { margin-top:4px; color:#88877f; font-size:8px; }
+    .mypage-offer-price { margin-top:auto; padding-top:9px; font-size:11px; font-weight:700; }
+    .mypage-offer-card button { margin-top:8px; border:1px solid #242420; padding:7px 9px; background:#242420; color:white; font-size:8px; }
+    .mypage-offer-card button:hover { background:#484741; }
+    .mypage-offer-card button:disabled { border-color:#dfded9; background:#efeee9; color:#777772; cursor:default; }
+    .mypage-empty { padding:48px 20px; border:1px dashed #d8d7d1; text-align:center; color:#777772; }
+    .mypage-empty strong { display:block; color:#343430; font-size:13px; }
+    .mypage-empty p { margin:8px 0 17px; font-size:9px; }
+    .mypage-empty .btn { min-height:38px; font-size:9px; }
+    .mypage-settings { max-width:650px; }
+    .mypage-settings .panel { margin-top:0; }
+    .mypage-demo-note { margin-top:14px; color:#93928b; font-size:8px; }
+    .mypage-saved-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .mypage-saved-item { min-width:0; position:relative; }
+    .mypage-saved-item img { display:block; width:100%; aspect-ratio:.78; object-fit:cover; filter:grayscale(24%); background:#e5e4df; }
+    .mypage-saved-brand { margin-top:10px; font-size:9px; font-weight:700; letter-spacing:.04em; }
+    .mypage-saved-name { margin-top:4px; color:#777772; font-size:9px; line-height:1.5; }
+    .mypage-saved-price { margin-top:8px; font-size:10px; font-weight:700; }
+    .mypage-saved-remove { position:absolute; top:8px; right:8px; width:28px; height:28px; border:0; border-radius:50%; background:#ffffffdf; color:#222; font-size:16px; line-height:1; }
+    .mypage-saved-remove:hover { background:#171716; color:#fff; }
+
+    /* Design refinement: clearer hierarchy, more editorial product browsing */
+    :root {
+      --ink:#171716;
+      --muted:#777772;
+      --line:#e6e5e1;
+      --paper:#f4f3f0;
+      --soft:#ecebe7;
+      --dark:#171716;
+      --radius:4px;
+    }
+    body { background:#f4f3f0; }
+    .announcement { height:29px; font-size:9px; letter-spacing:.19em; }
+    .site-header { background:rgba(248,247,244,.94); }
+    .header-main { height:74px; }
+    .brand { gap:11px; }
+    .brand-mark { width:78px; height:60px; }
+    .brand-name { font-size:20px; letter-spacing:.2em; }
+    .main-nav { height:48px; border-top:1px solid #efeeea; }
+    .nav-link { font-size:10px; letter-spacing:.11em; }
+    .hero { min-height:430px; margin:9px 0 27px; grid-template-columns:1fr 1fr; background:#eeede9; }
+    .hero-copy { padding:52px 48px 46px 54px; }
+    .hero .eyebrow { color:#777772; }
+    .hero h1 { max-width:550px; font-size:clamp(42px,4.7vw,64px); letter-spacing:-.082em; line-height:1.12; }
+    .hero h1 em { color:#777772; }
+    .hero-desc { max-width:360px; color:#696963; font-size:12px; line-height:1.9; }
+    .hero-visual { min-height:430px; }
+    .hero-image { filter:grayscale(100%); }
+    .hero-image:after { background:linear-gradient(0deg,rgba(17,17,17,.34),transparent 58%),linear-gradient(90deg,rgba(238,237,233,.26),transparent 40%); }
+    .hero-bubble { width:104px; height:104px; left:-24px; bottom:34px; font-size:9px; }
+    .hero-caption strong { font-size:11px; letter-spacing:.1em; }
+    .section { margin-bottom:58px; }
+    .section-head { margin-bottom:19px; }
+    .section-kicker { color:#85857e; font-size:9px; letter-spacing:.23em; }
+    .section-title { font-size:24px; }
+    .section-title small { font-size:10px; color:#888880; }
+    .product-row { gap:14px; }
+    .product-image { background:#e9e8e4; border-radius:3px; }
+    .product-image img { filter:grayscale(58%); transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .35s; }
+    .product-card:hover .product-image img { filter:grayscale(18%); }
+    .product-image .heart { width:30px; height:30px; top:10px; right:10px; background:#f8f8f5e8; }
+    .product-label { background:#f7f6f3; color:#242420; font-size:8px; letter-spacing:.12em; }
+    .product-meta { padding-top:12px; }
+    .product-brand { font-size:9px; letter-spacing:.11em; }
+    .product-name { font-size:10px; color:#6f6f69; }
+    .product-price { font-size:11px; }
+    .daily-banner { min-height:166px; background:#1a1a19; padding:34px 40px; margin-bottom:58px; }
+    .daily-banner h2 { font-size:26px; }
+    .daily-banner .btn { border-radius:2px; }
+    .request-card { padding:20px 19px; border-color:#e8e7e3; border-radius:3px; }
+    .request-card:hover { box-shadow:0 12px 30px #1717160a; }
+    .request-card h3 { font-size:13px; }
+    .request-foot { border-color:#eeede9; }
+    .editorial-card { border-radius:3px; }
+    .footer { border-color:#e3e2de; }
+    .subpage-intro { padding-top:45px; }
+    .panel,.example-card { border-color:#e8e7e3; border-radius:3px; }
+    .how-card { background:#1a1a19; }
+    .tip-card { background:#eeede9; }
+    .seller-toolbar { gap:7px; }
+    .filter-chip { font-size:10px; padding:9px 14px; }
+    .seller-note { background:#eeede9; border-left:2px solid #777772; }
+    .seller-request { border-color:#e8e7e3; border-radius:3px; }
+    .seller-request:hover { box-shadow:0 10px 26px #1717160a; }
+    .seller-respond { border-radius:2px; }
+    .seller-bottom { border-radius:3px; }
+    .modal { border-radius:4px; }
+    .toast { border-radius:3px; }
+
+    .journey-strip { display:grid; grid-template-columns:minmax(150px,.8fr) repeat(3,1fr); align-items:center; gap:0; margin:0 0 56px; padding:17px 21px; background:#ebeae6; border:1px solid #e6e5e1; }
+    .journey-label { padding-right:18px; font-size:9px; letter-spacing:.17em; color:#777772; }
+    .journey-step { display:flex; align-items:center; gap:11px; min-height:32px; padding:0 18px; border-left:1px solid #d8d7d2; }
+    .journey-step b { font:600 10px Manrope,sans-serif; color:#8c8b84; }
+    .journey-step span { font-size:10px; color:#343430; }
+    .journey-step:last-child span { font-weight:700; }
+    .view-all { font-size:10px; }
+    .view-all span { transition:transform .2s; }
+    .view-all:hover span { transform:translate(2px,-2px); }
+
+    .home-category-nav { display:grid; grid-template-columns:145px 1fr; align-items:stretch; margin:10px 0 22px; padding:12px 18px; background:#ebeae6; border:1px solid #e4e3de; }
+    .category-nav-label { display:flex; flex-direction:column; justify-content:center; gap:5px; border-right:1px solid #d8d7d1; }
+    .category-nav-label small { color:#88877f; font-size:8px; letter-spacing:.18em; }
+    .category-nav-label strong { font-size:13px; letter-spacing:-.04em; }
+    .home-category-list { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); }
+    .home-category-item { display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; padding:5px 15px; border:0; border-right:1px solid #d8d7d1; background:transparent; color:#242420; text-align:left; transition:background .18s,color .18s; }
+    .home-category-item:last-child { border-right:0; }
+    .home-category-item:hover,.home-category-item.active { background:#1a1a19; color:#fff; }
+    .home-category-item strong { font-size:11px; }
+    .home-category-item small { font-size:8px; color:#88877f; letter-spacing:.08em; white-space:nowrap; }
+    .home-category-item:hover small,.home-category-item.active small { color:#c4c3bc; }
+    .customer-category-nav { display:flex; justify-content:space-between; align-items:center; gap:24px; margin:20px 0 0; padding:16px 19px; background:#ebeae6; border:1px solid #e4e3de; }
+    .customer-category-heading { display:flex; flex-direction:column; gap:5px; flex:none; }
+    .customer-category-heading small { font-size:8px; color:#88877f; letter-spacing:.16em; }
+    .customer-category-heading strong { font-size:12px; }
+    .customer-category-options { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+    .customer-category-chip { border:1px solid #d9d8d2; background:#f8f7f4; color:#55554f; padding:9px 13px; font-size:10px; transition:.18s; }
+    .customer-category-chip:hover,.customer-category-chip.active { background:#171716; color:#fff; border-color:#171716; }
+    .seller-toolbar { margin-top:20px; }
+
+    /* Buyer purchase / styling modes */
+    .customer-mode-switch,.seller-mode-switch { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:20px 0 0; }
+    .customer-mode-tab,.seller-mode-tab { position:relative; min-height:74px; display:flex; align-items:center; gap:14px; padding:14px 17px; border:1px solid #e0e0dc; background:#fff; color:var(--ink); text-align:left; transition:.2s; }
+    .customer-mode-tab:hover,.seller-mode-tab:hover { border-color:#9b9b96; }
+    .customer-mode-tab.active,.seller-mode-tab.active { background:#1a1b1a; border-color:#1a1b1a; color:#fff; }
+    .mode-number { color:#a1a19b; font:500 10px Manrope,sans-serif; }
+    .customer-mode-tab strong { display:block; font-size:12px; margin-bottom:4px; }
+    .customer-mode-tab small,.seller-mode-tab span { display:block; color:#92938e; font-size:9px; }
+    .customer-mode-tab.active small,.seller-mode-tab.active span { color:#c4c4bf; }
+    .mode-arrow { margin-left:auto; color:#999; }
+    .customer-mode-panel,.seller-mode-panel { display:none; }
+    .customer-mode-panel.active,.seller-mode-panel.active { display:block; animation:fade .25s ease both; }
+    .customer-mode-panel .customer-category-nav { margin-top:20px; }
+    .styling-intro,.styling-seller-intro { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin:30px 0 18px; }
+    .styling-intro h2,.styling-seller-intro h2 { margin:0; font:600 clamp(21px,2.8vw,30px)/1.3 Manrope,'Noto Sans KR',sans-serif; letter-spacing:-.06em; }
+    .styling-intro p,.styling-seller-intro p { margin:8px 0 0; color:#777873; font-size:10px; }
+    .demo-pill { flex:none; border:1px solid #deded9; border-radius:20px; padding:8px 11px; color:#777873; font-size:8px; letter-spacing:.1em; }
+    .styling-layout { display:grid; grid-template-columns:minmax(0,1.12fr) minmax(280px,.68fr); gap:18px; align-items:start; }
+    .styling-form { padding:24px; }
+    .body-profile-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:10px; padding:15px; background:#f7f7f5; border:1px solid #ecece8; }
+    .body-profile-fields .field label { font-size:9px; }
+    .input-unit { position:relative; }
+    .input-unit input { width:100%; padding-right:36px; }
+    .input-unit span { position:absolute; right:12px; top:50%; transform:translateY(-50%); color:#92938e; font-size:9px; }
+    .styling-aside { display:grid; gap:13px; }
+    .styling-visual-card { display:flex; flex-direction:column; align-items:center; padding:19px 20px; background:#e9e9e6; text-align:center; }
+    .styling-visual-card .section-kicker { align-self:flex-start; }
+    .body-illustration { width:112px; height:150px; margin:5px 0 10px; color:#434440; }
+    .styling-visual-card strong { font-size:11px; }
+    .styling-visual-card p { max-width:260px; margin:7px 0 0; color:#777873; font-size:9px; line-height:1.7; }
+    .styling-how-card { padding:19px; }
+    .styling-how-card h3 { font-size:17px; }
+    .styling-results { margin:45px 0 15px; }
+    .styling-results .section-head { align-items:center; }
+    .styling-offers-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .styling-offer-card { display:grid; grid-template-columns:130px minmax(0,1fr); gap:15px; padding:13px; background:#fff; border:1px solid #e8e8e4; }
+    .styling-offer-visual { min-height:145px; display:grid; place-items:center; background:#efefec; color:#555650; }
+    .styling-offer-visual svg { width:63px; height:82px; }
+    .styling-offer-info { min-width:0; }
+    .styling-offer-info small { color:#92938e; font-size:8px; }
+    .styling-offer-info h3 { margin:6px 0; font-size:12px; }
+    .styling-offer-info p { margin:0; color:#777873; font-size:9px; line-height:1.6; }
+    .styling-product-list { display:flex; flex-wrap:wrap; gap:5px; margin:9px 0; }
+    .styling-product-list span { padding:5px 7px; background:#f2f2f0; color:#666762; font-size:8px; }
+    .styling-offer-total { display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid #ecece9; font-size:9px; }
+    .styling-offer-total strong { font-size:12px; }
+    .seller-mode-switch { margin-top:21px; }
+    .seller-mode-tab { min-height:58px; font-size:11px; font-weight:700; }
+    .seller-mode-tab span { margin-left:auto; font-weight:400; }
+    .seller-mode-tab b { display:grid; place-items:center; width:21px; height:21px; border-radius:50%; background:#ecece8; color:#353632; font-size:9px; }
+    .seller-mode-tab.active b { background:#fff; color:#171817; }
+    .styling-seller-intro { margin-top:27px; }
+    .styling-request-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:18px; }
+    .styling-request-card { padding:19px; background:#fff; border:1px solid #e5e5e1; }
+    .styling-request-card-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; }
+    .styling-request-card h3 { margin:0; font-size:13px; }
+    .styling-request-card .request-time { white-space:nowrap; }
+    .styling-request-meta { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+    .styling-request-meta span { padding:6px 8px; background:#f1f1ef; color:#60615c; font-size:8px; }
+    .styling-request-copy { margin:0; color:#777873; font-size:9px; line-height:1.7; white-space:pre-line; }
+    .styling-request-card-foot { display:flex; justify-content:space-between; align-items:center; gap:12px; border-top:1px solid #ededeb; margin-top:14px; padding-top:12px; }
+    .styling-request-card-foot strong { font-size:11px; }
+    .styling-respond { min-height:35px; padding:0 11px; border:1px solid #171817; background:#171817; color:#fff; font-size:9px; }
+    .seller-note { margin-top:14px; }
+    .styling-request-grid .empty-state,.styling-offers-grid .empty-state { grid-column:1/-1; padding:24px; background:#fff; border:1px solid #e8e8e4; text-align:center; color:#888984; font-size:10px; }
+    .styling-request-summary { margin:18px 0; padding:14px; background:#f4f4f2; border:1px solid #e8e8e4; }
+    .styling-request-summary strong { display:block; font-size:11px; }
+    .styling-request-summary span { display:inline-block; margin:8px 5px 0 0; padding:5px 7px; background:#fff; color:#666762; font-size:8px; }
+    .styling-inventory-list { display:grid; gap:7px; margin:10px 0 14px; }
+    .styling-inventory-item { display:flex; align-items:center; gap:10px; min-height:58px; padding:9px 11px; border:1px solid #e6e6e2; cursor:pointer; }
+    .styling-inventory-item:has(input:checked) { border-color:#242522; background:#f7f7f5; }
+    .styling-inventory-item input { position:absolute; opacity:0; pointer-events:none; }
+    .inventory-check { width:16px; height:16px; flex:none; border:1px solid #c6c7c2; border-radius:50%; }
+    .styling-inventory-item input:checked + .inventory-check { background:#171817; border-color:#171817; box-shadow:inset 0 0 0 4px white; }
+    .inventory-copy { flex:1; }
+    .inventory-copy strong,.inventory-copy small { display:block; }
+    .inventory-copy strong { font-size:9px; }
+    .inventory-copy small { margin-top:3px; color:#8a8b86; font-size:8px; }
+    .styling-inventory-item > b { font-size:9px; white-space:nowrap; }
+    .styling-total { display:flex; justify-content:space-between; padding:12px 0; border-top:1px solid #e7e7e3; border-bottom:1px solid #e7e7e3; font-size:10px; }
+    .styling-total strong { font-size:13px; }
+    .styling-offer-note { margin-top:14px; }
+
+    @media (max-width:1050px) {
+      .header-main { padding:0 24px; grid-template-columns:1fr minmax(180px,340px) 1fr; gap:18px; }
+      .main-nav { padding-left:24px; padding-right:24px; }
+      main { padding-left:24px; padding-right:24px; }
+      .product-row { grid-template-columns:repeat(3,minmax(0,1fr)); row-gap:22px; }
+      .product-card:nth-child(n+4) { display:none; }
+      .hero { min-height:390px; }
+      .hero-visual { min-height:390px; }
+      .seller-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width:700px) {
+      .announcement { height:27px; font-size:8px; }
+      .header-main { height:64px; padding:0 16px; display:flex; gap:13px; }
+      .brand-mark { width:57px; height:44px; }
+      .brand-name { font-size:17px; }
+      .brand-sub { display:none; }
+      .search { flex:1; }
+      .search input { height:36px; padding-left:13px; font-size:10px; }
+      .search button { width:28px; height:28px; }
+      .header-actions { gap:6px; }
+      .header-actions .text-action { display:none; }
+      .icon-action { width:27px; }
+      .main-nav { padding:0 16px; height:47px; gap:23px; overflow:auto; scrollbar-width:none; }
+      .main-nav::-webkit-scrollbar { display:none; }
+      .nav-link { white-space:nowrap; font-size:10px; }
+      .nav-note { display:none; }
+      main { padding:0 16px 60px; }
+      .hero { display:flex; flex-direction:column; margin:4px 0 42px; min-height:0; }
+      .hero-copy { padding:35px 24px 28px; }
+      .hero h1 { font-size:43px; }
+      .hero-desc { font-size:11px; margin:16px 0 20px; }
+      .btn { min-height:42px; padding:0 13px; font-size:10px; }
+      .hero-visual { min-height:285px; }
+      .hero-image { background-position:center 35%; }
+      .hero-bubble { width:82px; height:82px; left:auto; right:17px; bottom:18px; font-size:8px; }
+      .hero-bubble b { font-size:17px; }
+      .section { margin-bottom:43px; }
+      .section-head { margin-bottom:16px; }
+      .section-title { font-size:21px; }
+      .section-title small { display:block; margin:6px 0 0; font-size:9px; }
+      .product-row { grid-template-columns:repeat(2,minmax(0,1fr)); gap:17px 9px; }
+      .product-card:nth-child(n+4) { display:block; }
+      .product-card:nth-child(n+5) { display:none; }
+      .product-name { font-size:9px; }
+      .daily-banner { padding:25px 20px; min-height:180px; align-items:flex-start; flex-direction:column; gap:17px; margin-bottom:42px; }
+      .daily-banner h2 { font-size:23px; }
+      .request-grid { grid-template-columns:1fr; }
+      .request-card:nth-child(n+3) { display:none; }
+      .editorial { grid-template-columns:1fr; }
+      .editorial-card { min-height:190px; }
+      .footer { gap:16px; flex-direction:column; }
+      .subpage-intro { padding:29px 0 21px; align-items:flex-start; flex-direction:column; }
+      .subpage-intro h1 { font-size:35px; }
+      .stepper { align-self:stretch; padding:5px 0 0; }
+      .customer-layout { grid-template-columns:1fr; padding-top:17px; }
+      .panel { padding:18px; }
+      .side-panel { display:grid; grid-template-columns:1fr 1fr; }
+      .how-card { grid-row:span 2; padding:17px; }
+      .how-card h3 { font-size:16px; }
+      .tip-card,.example-card { padding:15px; }
+      .form-grid { gap:12px 9px; }
+      .field input,.field select,.field textarea { font-size:10px; padding:10px; }
+      .seller-toolbar { overflow:auto; }
+      .seller-toolbar .sort { white-space:nowrap; }
+      .filter-chip { white-space:nowrap; }
+      .seller-request { grid-template-columns:104px 1fr; gap:11px; padding:10px; }
+      .seller-request-photo { height:143px; }
+      .seller-request-info h3 { font-size:11px; }
+      .seller-request-info p { font-size:8px; }
+      .seller-request-info .tag { font-size:7px; }
+      .seller-respond { padding:8px; font-size:8px; }
+      .seller-budget strong { font-size:11px; }
+      .seller-bottom { padding:20px; gap:15px; align-items:flex-start; flex-direction:column; }
+      .seller-bottom h2 { font-size:18px; }
+      .seller-grid { gap:9px; }
+      .modal { padding:22px 18px; }
+      .hero { margin-bottom:22px; }
+      .journey-strip { grid-template-columns:1fr; gap:0; padding:14px 16px; margin-bottom:43px; }
+      .journey-label { padding:0 0 10px; }
+      .journey-step { min-height:39px; padding:0; border-left:0; border-top:1px solid #d8d7d2; }
+      .journey-step b { width:25px; }
+      .hero-bubble { left:auto; right:17px; }
+      .section { margin-bottom:43px; }
+      .home-category-nav { grid-template-columns:1fr; padding:12px; margin:8px 0 18px; }
+      .category-nav-label { border-right:0; border-bottom:1px solid #d8d7d1; padding:2px 3px 10px; }
+      .home-category-list { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .home-category-item { min-height:53px; padding:8px; border-bottom:1px solid #d8d7d1; }
+      .home-category-item:nth-child(3n) { border-right:0; }
+      .home-category-item:nth-child(n+4) { border-bottom:0; }
+      .home-category-item small { font-size:7px; }
+      .customer-category-nav { align-items:flex-start; flex-direction:column; gap:13px; margin-top:16px; padding:14px; }
+      .customer-category-options { gap:6px; }
+      .customer-category-chip { padding:8px 11px; font-size:9px; }
+      .mypage-intro { padding:29px 0 20px; }
+      .mypage-profile { grid-template-columns:1fr; gap:18px; margin:17px 0 20px; padding:18px; }
+      .mypage-avatar { width:47px; height:47px; }
+      .mypage-profile-edit { padding:8px 9px; font-size:8px; }
+      .mypage-metrics { border-top:1px solid #4a4944; border-left:0; padding-top:12px; }
+      .mypage-metric { padding:3px 9px; }
+      .mypage-metric strong { font-size:19px; }
+      .mypage-metric span { font-size:8px; }
+      .mypage-layout { grid-template-columns:1fr; gap:18px; }
+      .mypage-sidebar { position:static; flex-direction:row; overflow-x:auto; border-top:0; border-bottom:1px solid #deddd8; scrollbar-width:none; }
+      .mypage-sidebar::-webkit-scrollbar { display:none; }
+      .mypage-tab { flex:none; min-height:39px; padding:0 12px; border:0; border-bottom:2px solid transparent; white-space:nowrap; }
+      .mypage-tab.active { border-bottom-color:#171716; background:transparent; }
+      .mypage-sidebar-note { display:none; }
+      .mypage-panel-head h2 { font-size:16px; }
+      .mypage-columns { grid-template-columns:1fr; }
+      .mypage-offer-grid { grid-template-columns:1fr; }
+      .mypage-saved-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 9px; }
+      .mypage-quicklinks { gap:7px; }
+      .mypage-quicklink { min-height:54px; padding:10px; font-size:9px; }
+    }
+    @media (max-width:900px) {
+      .styling-layout { grid-template-columns:1fr; }
+      .styling-aside { grid-template-columns:1fr 1fr; }
+      .styling-request-grid { grid-template-columns:1fr; }
+    }
+    @media (max-width:700px) {
+      .customer-mode-switch,.seller-mode-switch { gap:6px; }
+      .customer-mode-tab { min-height:74px; gap:8px; padding:10px; }
+      .customer-mode-tab strong { font-size:10px; }
+      .customer-mode-tab small { font-size:8px; line-height:1.4; }
+      .mode-number { font-size:8px; }
+      .seller-mode-tab { display:flex; flex-wrap:wrap; gap:7px; padding:10px; font-size:9px; }
+      .seller-mode-tab span { width:100%; margin-left:0; font-size:8px; }
+      .seller-mode-tab b { position:absolute; right:8px; top:8px; width:17px; height:17px; font-size:8px; }
+      .styling-intro,.styling-seller-intro { align-items:flex-start; flex-direction:column; gap:10px; margin:23px 0 14px; }
+      .styling-intro h2,.styling-seller-intro h2 { font-size:22px; }
+      .styling-form { padding:17px; }
+      .body-profile-fields { gap:9px; padding:11px; }
+      .styling-aside { grid-template-columns:1fr; }
+      .styling-results { margin-top:34px; }
+      .styling-offers-grid { grid-template-columns:1fr; }
+      .styling-offer-card { grid-template-columns:90px minmax(0,1fr); gap:11px; padding:10px; }
+      .styling-offer-visual { min-height:126px; }
+      .styling-offer-visual svg { width:48px; height:67px; }
+      .styling-request-card { padding:15px; }
+      .styling-request-card-foot { align-items:flex-start; flex-direction:column; }
+      .styling-respond { width:100%; }
+      .styling-modal { max-height:88vh; overflow:auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="announcement"><b>WANTED MARKET</b><span>—</span><span>THE PIECE YOU WANT, FOUND.</span></div>
+  <header class="site-header">
+    <div class="header-main">
+      <a class="brand" href="#home" data-page="home" aria-label="FLIP home">
+        <img class="brand-mark" src="./flip-logo-transparent.png" alt="" aria-hidden="true" />
+        <span class="brand-name">FLIP</span>
+      </a>
+      <form class="search" id="searchForm">
+        <input id="globalSearch" type="search" placeholder="브랜드, 상품, 원하는 스타일 검색" aria-label="상품 검색" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" />
+        <button type="submit" aria-label="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></button>
+        <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="연관 검색어"></div>
+      </form>
+      <div class="header-actions">
+        <button class="icon-action" aria-label="찜 목록" id="headerHeart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg><span class="badge" id="savedCount">0</span></button>
+        <button class="icon-action" aria-label="마이페이지" id="profileButton"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="3.5"/><path d="M4.8 20c.5-3.5 3.4-5.5 7.2-5.5s6.7 2 7.2 5.5"/></svg></button>
+      </div>
+    </div>
+    <nav class="main-nav" aria-label="주요 메뉴">
+      <button class="nav-link active" data-page="home">HOME</button>
+      <button class="nav-link" data-page="customer">FOR CUSTOMER</button>
+      <button class="nav-link" data-page="seller">FOR SELLER</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page active" id="homePage">
+      <nav class="home-category-nav" aria-label="홈 상품 카테고리">
+        <div class="category-nav-label"><small>DISCOVER BY CATEGORY</small><strong>카테고리로 찾기</strong></div>
+        <div class="home-category-list">
+          <button class="home-category-item active" data-home-category="전체"><strong>전체</strong><small>ALL ITEMS</small></button>
+          <button class="home-category-item" data-home-category="상의"><strong>상의</strong><small>TOPS</small></button>
+          <button class="home-category-item" data-home-category="하의"><strong>하의</strong><small>BOTTOMS</small></button>
+          <button class="home-category-item" data-home-category="아우터"><strong>아우터</strong><small>OUTERWEAR</small></button>
+          <button class="home-category-item" data-home-category="신발"><strong>신발</strong><small>SHOES</small></button>
+          <button class="home-category-item" data-home-category="가방"><strong>가방</strong><small>BAGS</small></button>
+        </div>
+      </nav>
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">A NEW WAY TO FIND FASHION</div>
+          <h1>검색해도 안 보이면,<br><em>찾고 있다고 말해요.</em></h1>
+          <p class="hero-desc">원하는 옷의 사진과 조건을 남겨보세요. 오프라인 매장과 판매자가 보유한 상품을 직접 제안해요.</p>
+          <div class="button-row">
+            <button class="btn" data-page="customer">원하는 옷 요청하기 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>
+            <button class="btn btn-light" data-page="seller">요청 둘러보기</button>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-image"></div>
+          <span class="hero-label">YOUR NEXT FIND / 001</span>
+          <div class="hero-bubble"><span><b>01</b>POST WHAT<br>YOU WANT</span></div>
+          <div class="hero-caption"><strong>FIND YOUR OWN FORM.</strong><span>CURATED BY YOU, FOUND BY US.</span></div>
+        </div>
+      </div>
+
+      <div class="journey-strip" aria-label="FLIP 이용 방법">
+        <div class="journey-label">SHOPPING, RE-ORDERED</div>
+        <div class="journey-step"><b>01</b><span>찾는 옷을 남기고</span></div>
+        <div class="journey-step"><b>02</b><span>판매자의 제안을 받고</span></div>
+        <div class="journey-step"><b>03</b><span>비교해 직접 선택해요</span></div>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <div><div class="section-kicker">RECENTLY VIEWED</div><h2 class="section-title">최근 본 상품 <small>마음에 남은 아이템을 다시 만나보세요</small></h2></div>
+          <button class="view-all" data-page="seller">전체보기 <span>↗</span></button>
+        </div>
+        <div class="product-row" id="recentProducts">
+          <article class="product-card" data-search="아워레가시 모헤어 가디건 그레이 니트 상의">
+            <div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=700&q=82" alt="회색 니트"/><span class="product-label">RECENT</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div>
+            <div class="product-meta"><div class="product-brand">OUR LEGACY</div><div class="product-name">Evening Polo Mohair — Grey</div><div class="product-price">₩ 198,000 <small>2 제안</small></div></div>
+          </article>
+          <article class="product-card" data-search="아디다스 삼바 OG 검정 스니커즈 신발">
+            <div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=82" alt="스니커즈"/><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div>
+            <div class="product-meta"><div class="product-brand">ADIDAS</div><div class="product-name">Samba OG Core Black</div><div class="product-price">₩ 112,000 <small>NEW</small></div></div>
+          </article>
+          <article class="product-card" data-search="빈티지 레더 재킷 블랙 아우터 재킷">
+            <div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=700&q=82" alt="레더 재킷"/><span class="product-label">VINTAGE</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div>
+            <div class="product-meta"><div class="product-brand">ARCHIVE FIND</div><div class="product-name">90s Leather Blouson</div><div class="product-price">₩ 145,000 <small>USED · A</small></div></div>
+          </article>
+          <article class="product-card" data-search="나이키 빈티지 스웻셔츠 그레이 상의 맨투맨">
+            <div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=82" alt="회색 스웻셔츠"/><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div>
+            <div class="product-meta"><div class="product-brand">NIKE VINTAGE</div><div class="product-name">Grey Center Swoosh Crewneck</div><div class="product-price">₩ 89,000 <small>USED · A</small></div></div>
+          </article>
+          <article class="product-card" data-search="미우미우 빈티지 숄더백 가방 브라운">
+            <div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=700&q=82" alt="숄더백"/><span class="product-label">FOUND</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div>
+            <div class="product-meta"><div class="product-brand">MIU MIU</div><div class="product-name">Vintage Leather Shoulder Bag</div><div class="product-price">₩ 325,000 <small>1 제안</small></div></div>
+          </article>
+          <article class="product-card" data-search="아워레가시 데님 팬츠 블루 하의 청바지">
+            <div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=700&q=82" alt="데님 팬츠"/><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div>
+            <div class="product-meta"><div class="product-brand">OUR LEGACY</div><div class="product-name">Third Cut Digital Denim</div><div class="product-price">₩ 174,000 <small>USED · S</small></div></div>
+          </article>
+        </div>
+        <div class="empty-state" id="searchEmpty" style="display:none">검색 결과가 없어요. 찾는 옷을 요청으로 남겨보세요.</div>
+      </section>
+
+      <div class="daily-banner">
+        <div><div class="eyebrow">YOUR TASTE, YOUR MARKET</div><h2>찾는 옷이 보이지 않나요?</h2><p>원하는 조건을 남기면 판매자가 직접 제안해요.</p></div>
+        <button class="btn" data-page="customer">요청 시작하기 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12h15M13 5l7 7-7 7"/></svg></button>
+      </div>
+
+      <section class="section">
+        <div class="section-head"><div><div class="section-kicker">DAILY BEST · MOST LOVED</div><h2 class="section-title">오늘의 인기 매물 <small>많이 저장된 아이템을 모았어요</small></h2></div><button class="view-all" data-page="seller">인기 상품 더 보기 <span>↗</span></button></div>
+        <div class="product-row">
+          <article class="product-card" data-search="아워레가시 모헤어 가디건 그레이 니트 상의"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=700&q=82" alt="그레이 니트 가디건"/><span class="product-label">BEST 01</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div><div class="product-meta"><div class="product-brand">OUR LEGACY</div><div class="product-name">Evening Polo Mohair — Grey</div><div class="product-price">₩ 198,000 <small>저장 124</small></div></div></article>
+          <article class="product-card" data-search="아디다스 삼바 OG 검정 스니커즈 신발"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=700&q=82" alt="레드 스니커즈"/><span class="product-label">BEST 02</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div><div class="product-meta"><div class="product-brand">ADIDAS</div><div class="product-name">Samba OG Core Black</div><div class="product-price">₩ 112,000 <small>저장 98</small></div></div></article>
+          <article class="product-card" data-search="빈티지 레더 재킷 블랙 아우터 재킷"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=700&q=82" alt="빈티지 레더 재킷"/><span class="product-label">BEST 03</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div><div class="product-meta"><div class="product-brand">ARCHIVE FIND</div><div class="product-name">90s Leather Blouson</div><div class="product-price">₩ 145,000 <small>저장 87</small></div></div></article>
+          <article class="product-card" data-search="나이키 빈티지 스웻셔츠 그레이 상의 맨투맨"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=82" alt="빈티지 스웻셔츠"/><span class="product-label">BEST 04</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div><div class="product-meta"><div class="product-brand">NIKE VINTAGE</div><div class="product-name">Grey Center Swoosh Crewneck</div><div class="product-price">₩ 89,000 <small>저장 74</small></div></div></article>
+          <article class="product-card" data-search="미우미우 빈티지 숄더백 가방 브라운"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=700&q=82" alt="빈티지 숄더백"/><span class="product-label">BEST 05</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div><div class="product-meta"><div class="product-brand">MIU MIU</div><div class="product-name">Vintage Leather Shoulder Bag</div><div class="product-price">₩ 325,000 <small>저장 63</small></div></div></article>
+          <article class="product-card" data-search="아워레가시 데님 팬츠 블루 하의 청바지"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=700&q=82" alt="블루 데님"/><span class="product-label">BEST 06</span><button class="heart" aria-label="찜하기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20.8 8.8c0 5.2-8.8 10-8.8 10s-8.8-4.8-8.8-10A4.8 4.8 0 0 1 12 6.4a4.8 4.8 0 0 1 8.8 2.4Z"/></svg></button></div><div class="product-meta"><div class="product-brand">OUR LEGACY</div><div class="product-name">Third Cut Digital Denim</div><div class="product-price">₩ 174,000 <small>저장 58</small></div></div></article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="section-kicker">OPEN REQUESTS</div><h2 class="section-title">지금 찾는 옷 <small>판매자의 제안을 기다리고 있어요</small></h2></div><button class="view-all" data-page="seller">요청 더 보기 <span>↗</span></button></div>
+        <div class="request-grid">
+          <article class="request-card" data-category="아우터"><div class="request-top"><span class="avatar">J</span><span class="request-user">jiyoon.archive</span><span class="request-time">12분 전</span></div><h3>아크네 스튜디오 울 머플러</h3><p>그레이 멜란지 컬러, 로고가 크게 보이지 않는 제품으로 찾고 있어요.</p><div class="tags"><span class="tag">그레이</span><span class="tag">중고 가능</span><span class="tag">상태 A 이상</span></div><div class="request-foot"><strong>최대 ₩ 180,000</strong><span>제안 3개</span></div></article>
+          <article class="request-card" data-category="상의"><div class="request-top"><span class="avatar" style="background:#9a9189">M</span><span class="request-user">moodboard_m</span><span class="request-time">38분 전</span></div><h3>빈티지 나이키 스웻셔츠</h3><p>90년대 느낌의 박시한 핏. 프린팅이 과하지 않은 제품을 원해요.</p><div class="tags"><span class="tag">L–XL</span><span class="tag">네이비·그레이</span><span class="tag">빈티지</span></div><div class="request-foot"><strong>₩ 100,000 내외</strong><span>제안 1개</span></div></article>
+          <article class="request-card" data-category="하의"><div class="request-top"><span class="avatar" style="background:#7e8580">H</span><span class="request-user">hyeon.zip</span><span class="request-time">1시간 전</span></div><h3>아워레가시 써드컷 데님</h3><p>블루 계열, 허리 28–29. 밑단 수선 없는 제품으로 찾고 있어요.</p><div class="tags"><span class="tag">28–29</span><span class="tag">블루 데님</span><span class="tag">실측 필수</span></div><div class="request-foot"><strong>최대 ₩ 220,000</strong><span>제안 0개</span></div></article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="section-kicker">THE FLIP EDIT</div><h2 class="section-title">취향을 찾는 새로운 방식</h2></div></div>
+        <div class="editorial">
+          <a class="editorial-card" href="#customer" data-page="customer"><img loading="lazy" src="https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=82" alt="거리에서 옷을 고르는 사람들"/><div class="editorial-copy"><span>For the one you missed</span><h3>품절된 그 옷, 다시 찾기</h3></div></a>
+          <a class="editorial-card" href="#seller" data-page="seller"><img loading="lazy" src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=82" alt="옷과 액세서리"/><div class="editorial-copy"><span>For the seller with an eye</span><h3>당신의 옷이 누군가의 찾던 옷</h3></div></a>
+        </div>
+      </section>
+      <footer class="footer"><span>© 2026 FLIP MARKET</span><span>ABOUT · HELP · TERMS · PRIVACY</span><span>FIND WHAT YOU FEEL.</span></footer>
+    </section>
+
+    <section class="page" id="customerPage">
+      <div class="subpage-intro">
+        <div><div class="eyebrow">FOR CUSTOMER / 01</div><h1>어떤 옷을 찾고 있나요?</h1><p>원하는 조건을 자세히 남길수록 더 정확한 제안을 받을 수 있어요.</p></div>
+        <div class="stepper"><b>01 요청 작성</b><span class="step-dot"></span><span>02 제안 비교</span><span class="step-dot"></span><span>03 선택 & 구매</span></div>
+      </div>
+      <div class="customer-mode-switch" role="tablist" aria-label="구매 모드 선택">
+        <button type="button" class="customer-mode-tab active" role="tab" aria-selected="true" data-customer-mode="purchase"><span class="mode-number">01</span><span><strong>일반 구매</strong><small>찾는 상품 하나를 요청하고 제안을 비교해요.</small></span><span class="mode-arrow">↗</span></button>
+        <button type="button" class="customer-mode-tab" role="tab" aria-selected="false" data-customer-mode="styling"><span class="mode-number">02</span><span><strong>코디 모드</strong><small>체형과 취향을 입력하면 판매자가 코디해요.</small></span><span class="mode-arrow">↗</span></button>
+      </div>
+      <div class="customer-mode-panel active" id="regularModePanel" role="tabpanel">
+      <div class="customer-category-nav">
+        <div class="customer-category-heading"><small>REQUEST CATEGORY</small><strong>찾는 옷 종류를 먼저 골라주세요</strong></div>
+        <div class="customer-category-options" aria-label="요청 카테고리 선택">
+          <button type="button" class="customer-category-chip" data-request-category="상의">상의</button>
+          <button type="button" class="customer-category-chip" data-request-category="하의">하의</button>
+          <button type="button" class="customer-category-chip" data-request-category="아우터">아우터</button>
+          <button type="button" class="customer-category-chip" data-request-category="신발">신발</button>
+          <button type="button" class="customer-category-chip" data-request-category="가방">가방</button>
+          <button type="button" class="customer-category-chip" data-request-category="액세서리">액세서리</button>
+        </div>
+      </div>
+      <div class="customer-layout">
+        <div class="panel">
+          <div class="panel-title"><h2>찾는 옷 정보</h2><span>* 필수 입력</span></div>
+          <form id="requestForm">
+            <label class="upload-zone" for="referenceImage">
+              <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><strong id="uploadTitle">참고 이미지 추가하기</strong><small id="uploadHelp">찾는 옷의 사진이나 비슷한 스타일 이미지를 올려주세요 · 최대 5장</small></div>
+              <input type="file" id="referenceImage" accept="image/*" multiple />
+            </label>
+            <div class="form-grid">
+              <div class="field"><label for="reqCategory">카테고리 *</label><select id="reqCategory" required><option value="">선택해주세요</option><option>상의</option><option>하의</option><option>아우터</option><option>신발</option><option>가방</option><option>액세서리</option></select></div>
+              <div class="field"><label for="reqBrand">브랜드</label><input id="reqBrand" placeholder="예: OUR LEGACY, 빈티지" /></div>
+              <div class="field full"><label for="reqTitle">찾는 옷을 한 문장으로 *</label><input id="reqTitle" required placeholder="예: 그레이 컬러의 빈티지 나이키 스웻셔츠" /></div>
+              <div class="field"><label for="reqSize">사이즈</label><input id="reqSize" placeholder="예: L / 허리 28–29" /></div>
+              <div class="field"><label for="reqBudget">예산 *</label><input id="reqBudget" required type="number" min="0" placeholder="최대 금액 (원)" /></div>
+              <div class="field full"><label>상품 상태</label><div class="checks" id="conditionChecks"><button type="button" class="check-chip selected">새 상품</button><button type="button" class="check-chip selected">중고 가능</button><button type="button" class="check-chip">빈티지</button><button type="button" class="check-chip">미개봉만</button></div></div>
+              <div class="field full"><label for="reqDesc">추가로 원하는 특징</label><textarea id="reqDesc" placeholder="색상, 핏, 소재, 실측 등 원하는 조건을 자유롭게 적어주세요."></textarea><span class="field-help">“비슷한 상품도 괜찮아요”처럼 대체 가능 여부도 적어주세요.</span></div>
+            </div>
+            <div class="privacy-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><span>요청은 공개되지만 연락처·주소는 공개되지 않아요. 판매자와 거래를 시작할 때만 필요한 정보를 공유합니다.</span></div>
+            <div class="form-submit"><small>등록 후에도 요청을 수정하거나 종료할 수 있어요.</small><button class="btn" type="submit">요청 등록하기 <span>↗</span></button></div>
+          </form>
+        </div>
+        <aside class="side-panel">
+          <div class="how-card"><div class="section-kicker">HOW IT WORKS</div><h3>요청 하나로<br>여러 제안을 받아보세요.</h3><div class="how-step"><b>01</b><span>찾는 옷과 조건을 작성해요.</span></div><div class="how-step"><b>02</b><span>판매자가 실제 상품으로 제안해요.</span></div><div class="how-step"><b>03</b><span>가격과 상태를 비교하고 선택해요.</span></div></div>
+          <div class="example-card"><div class="example-head"><b>요청 예시</b><small>이런 식으로 작성해보세요</small></div><div class="example-item"><div class="example-thumb"><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=200&q=75" alt="스웻셔츠 예시"/></div><div><b>90s 나이키 스웻셔츠</b><small>그레이 · L–XL · 빈티지</small></div><div class="example-count"><strong>04</strong><small>제안 도착</small></div></div></div>
+          <div class="tip-card"><h3>좋은 요청 작성 팁</h3><p>브랜드나 제품명을 모르더라도 괜찮아요. 사진, 색상, 핏, 예산 중 알고 있는 정보만 적어주세요.</p></div>
+        </aside>
+      </div>
+      <section class="section customer-more"><div class="section-head"><div><div class="section-kicker">SELLER PICKS</div><h2 class="section-title">판매자들의 제안 미리보기</h2></div></div><div class="product-row">
+        <article class="product-card"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=700&q=82" alt="그레이 스웻셔츠"/><span class="product-label">MATCH 96%</span></div><div class="product-meta"><div class="product-brand">NIKE VINTAGE</div><div class="product-name">90s Grey Crewneck · L</div><div class="product-price">₩ 92,000 <small>제안 상품</small></div></div></article>
+        <article class="product-card"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=700&q=82" alt="티셔츠"/></div><div class="product-meta"><div class="product-brand">ARCHIVE ROOM</div><div class="product-name">Vintage Logo Tee · XL</div><div class="product-price">₩ 58,000 <small>제안 상품</small></div></div></article>
+        <article class="product-card"><div class="product-image"><img loading="lazy" src="https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=700&q=82" alt="니트"/></div><div class="product-meta"><div class="product-brand">SECOND FORM</div><div class="product-name">Soft Knit Pullover · M</div><div class="product-price">₩ 74,000 <small>제안 상품</small></div></div></article>
+      </div></section>
+      </div>
+      <section class="customer-mode-panel" id="stylingModePanel" role="tabpanel" aria-label="코디 모드">
+        <div class="styling-intro">
+          <div><div class="section-kicker">PERSONAL STYLING REQUEST</div><h2>내 체형과 취향에 맞춘 코디를 받아보세요.</h2><p>판매자가 직접 자신의 보유 상품을 골라 한 벌의 코디로 제안해요.</p></div>
+          <span class="demo-pill">SELLER-CURATED LOOK</span>
+        </div>
+        <div class="styling-layout">
+          <form class="panel styling-form" id="stylingRequestForm">
+            <div class="panel-title"><h2>코디 요청 정보</h2><span>* 필수 입력</span></div>
+            <div class="form-grid">
+              <div class="field"><label for="stylingOccasion">코디 상황 *</label><select id="stylingOccasion" required><option value="">선택해주세요</option><option>학교·출근</option><option>데이트</option><option>여행</option><option>일상</option><option>특별한 날</option></select></div>
+              <div class="field"><label for="stylingBudget">전체 예산 *</label><input id="stylingBudget" type="number" min="0" required placeholder="코디 전체 예산 (원)" /></div>
+              <div class="field full"><label>체형 정보 *</label>
+                <div class="body-profile-fields">
+                  <div class="field"><label for="bodyHeight">키</label><div class="input-unit"><input id="bodyHeight" type="number" min="130" max="210" required placeholder="예: 168" /><span>cm</span></div></div>
+                  <div class="field"><label for="bodyTopSize">평소 상의 사이즈</label><select id="bodyTopSize" required><option value="">선택</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>2XL 이상</option></select></div>
+                  <div class="field"><label for="bodyBottomSize">평소 하의 사이즈</label><select id="bodyBottomSize" required><option value="">선택</option><option>XS / 24–25</option><option>S / 26–27</option><option>M / 28–29</option><option>L / 30–31</option><option>XL / 32–33</option><option>2XL 이상</option></select></div>
+                  <div class="field"><label for="bodyFit">선호 핏</label><select id="bodyFit"><option>오버핏</option><option selected>정핏</option><option>슬림핏</option><option>편한 핏</option></select></div>
+                </div>
+              </div>
+              <div class="field full"><label>코디에 포함하고 싶은 품목</label><div class="checks styling-item-checks"><button type="button" class="check-chip selected" data-styling-item="상의">상의</button><button type="button" class="check-chip selected" data-styling-item="하의">하의</button><button type="button" class="check-chip" data-styling-item="아우터">아우터</button><button type="button" class="check-chip" data-styling-item="신발">신발</button></div></div>
+              <div class="field full"><label>원하는 스타일 키워드</label><div class="checks styling-keyword-checks"><button type="button" class="check-chip" data-style-keyword="미니멀">미니멀</button><button type="button" class="check-chip" data-style-keyword="빈티지">빈티지</button><button type="button" class="check-chip" data-style-keyword="스트릿">스트릿</button><button type="button" class="check-chip" data-style-keyword="캐주얼">캐주얼</button><button type="button" class="check-chip" data-style-keyword="단정한">단정한</button></div></div>
+              <div class="field full"><label for="stylingNote">원하는 분위기와 피하고 싶은 요소</label><textarea id="stylingNote" placeholder="예: 어두운 색 위주, 너무 붙는 옷은 피하고 싶어요."></textarea></div>
+            </div>
+            <div class="privacy-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><span>입력한 체형 정보는 코디 요청을 확인하는 판매자에게만 제안 참고용으로 보여요. 사진이나 몸무게는 입력하지 않아도 됩니다.</span></div>
+            <div class="form-submit"><small>판매자가 보유 상품을 직접 조합해 제안해요.</small><button class="btn" type="submit">코디 요청 등록하기 ↗</button></div>
+          </form>
+          <aside class="styling-aside">
+            <div class="styling-visual-card">
+              <div class="section-kicker">FIT PROFILE</div>
+              <svg class="body-illustration" viewBox="0 0 180 240" fill="none" aria-hidden="true"><circle cx="90" cy="33" r="20" stroke="currentColor" stroke-width="3"/><path d="M69 67c-13 4-23 13-25 28l-6 48c-1 9 4 14 11 14s12-5 13-13l5-31v39l-3 57c-1 10 5 17 14 17s14-6 15-15l4-44 5 44c1 9 7 15 15 15 9 0 15-7 14-17l-3-57v-39l5 31c1 8 6 13 13 13s12-5 11-14l-6-48c-2-15-12-24-25-28-8-3-17-4-27-4s-19 1-27 4Z" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <strong>체형 정보는 핏을 맞추는 기준</strong>
+              <p>사이즈 숫자보다 평소 잘 맞는 옷의 정보를 적어주면 더 구체적인 제안을 받을 수 있어요.</p>
+            </div>
+            <div class="how-card styling-how-card"><div class="section-kicker">HOW STYLING WORKS</div><h3>판매자가 직접<br>한 벌을 완성해요.</h3><div class="how-step"><b>01</b><span>체형·상황·예산을 입력해요.</span></div><div class="how-step"><b>02</b><span>판매자가 가진 상품을 골라 코디해요.</span></div><div class="how-step"><b>03</b><span>구성 상품과 총액을 비교해요.</span></div></div>
+          </aside>
+        </div>
+        <section class="styling-results">
+          <div class="section-head"><div><div class="section-kicker">LOOKS FROM SELLERS</div><h2 class="section-title">받은 코디 제안</h2></div><span class="demo-pill">실제 상품 조합</span></div>
+          <div class="styling-offers-grid" id="buyerStylingOffers"></div>
+        </section>
+      </section>
+      <footer class="footer"><span>© 2026 FLIP MARKET</span><span>ABOUT · HELP · TERMS · PRIVACY</span><span>FIND WHAT YOU FEEL.</span></footer>
+    </section>
+
+    <section class="page" id="sellerPage">
+      <div class="subpage-intro">
+        <div><div class="eyebrow">FOR SELLER / 02</div><h1>누군가 찾는 옷,<br>당신에게 있을지도 몰라요.</h1><p>구매 요청을 살펴보고 가지고 있는 상품으로 제안해보세요.</p></div>
+        <button class="btn" id="sellerUpload">내 상품 등록하기 <span>↗</span></button>
+      </div>
+      <div class="seller-mode-switch" role="tablist" aria-label="판매자 요청 종류">
+        <button type="button" class="seller-mode-tab active" role="tab" aria-selected="true" data-seller-mode="purchase">상품 요청 <span>찾는 상품 하나를 제안</span></button>
+        <button type="button" class="seller-mode-tab" role="tab" aria-selected="false" data-seller-mode="styling">코디 요청 <span>내 상품으로 한 벌을 구성</span><b id="stylingRequestBadge">0</b></button>
+      </div>
+      <div class="seller-mode-panel active" id="sellerPurchasePanel" role="tabpanel">
+      <div class="seller-toolbar" id="sellerFilters">
+        <button class="filter-chip active" data-filter="전체">전체 요청</button><button class="filter-chip" data-filter="상의">상의</button><button class="filter-chip" data-filter="하의">하의</button><button class="filter-chip" data-filter="아우터">아우터</button><button class="filter-chip" data-filter="신발">신발</button><button class="filter-chip" data-filter="가방">가방</button>
+        <select class="sort" id="sortSelect" aria-label="정렬"><option>최신 요청순⌄</option><option>예산 높은순</option><option>제안 적은순</option></select>
+      </div>
+      <div class="seller-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>판매 중인 상품과 조건이 맞는 요청에 제안해보세요. 실제 상품 사진과 실측을 함께 보내면 구매자가 더 쉽게 선택할 수 있어요.</span></div>
+      <div class="seller-grid" id="sellerGrid">
+        <article class="seller-request" data-category="아우터" data-budget="180000" data-offers="3"><div class="seller-request-photo"><img loading="lazy" src="https://images.unsplash.com/photo-1543076447-215ad9ba6923?auto=format&fit=crop&w=500&q=78" alt="울 머플러 참고 이미지"/><span>아우터 · 액세서리</span></div><div class="seller-request-info"><span class="request-user">jiyoon.archive · 12분 전</span><h3>아크네 스튜디오 울 머플러</h3><p>그레이 멜란지, 로고가 크게 보이지 않는 제품. 중고 가능, 상태 A 이상.</p><div class="tags"><span class="tag">그레이</span><span class="tag">중고 가능</span><span class="tag">상태 A+</span></div><div class="seller-request-bottom"><div class="seller-budget"><small>희망 예산</small><strong>최대 ₩180,000</strong></div><button class="seller-respond" data-request="아크네 스튜디오 울 머플러">제안하기 ↗</button></div></div></article>
+        <article class="seller-request" data-category="상의" data-budget="100000" data-offers="1"><div class="seller-request-photo"><img loading="lazy" src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=500&q=78" alt="빈티지 스웻셔츠 참고 이미지"/><span>상의 · 빈티지</span></div><div class="seller-request-info"><span class="request-user">moodboard_m · 38분 전</span><h3>빈티지 나이키 스웻셔츠</h3><p>90년대 느낌의 박시한 핏. 프린팅이 과하지 않은 제품을 찾고 있어요.</p><div class="tags"><span class="tag">L–XL</span><span class="tag">네이비·그레이</span><span class="tag">빈티지</span></div><div class="seller-request-bottom"><div class="seller-budget"><small>희망 예산</small><strong>₩100,000 내외</strong></div><button class="seller-respond" data-request="빈티지 나이키 스웻셔츠">제안하기 ↗</button></div></div></article>
+        <article class="seller-request" data-category="하의" data-budget="220000" data-offers="0"><div class="seller-request-photo"><img loading="lazy" src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=500&q=78" alt="데님 참고 이미지"/><span>하의 · 데님</span></div><div class="seller-request-info"><span class="request-user">hyeon.zip · 1시간 전</span><h3>아워레가시 써드컷 데님</h3><p>블루 계열, 허리 28–29. 밑단 수선 없는 제품으로 찾고 있어요.</p><div class="tags"><span class="tag">28–29</span><span class="tag">블루 데님</span><span class="tag">실측 필수</span></div><div class="seller-request-bottom"><div class="seller-budget"><small>희망 예산</small><strong>최대 ₩220,000</strong></div><button class="seller-respond" data-request="아워레가시 써드컷 데님">제안하기 ↗</button></div></div></article>
+        <article class="seller-request" data-category="신발" data-budget="250000" data-offers="2"><div class="seller-request-photo"><img loading="lazy" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=500&q=78" alt="스니커즈 참고 이미지"/><span>신발 · 스니커즈</span></div><div class="seller-request-info"><span class="request-user">form.archive · 2시간 전</span><h3>살로몬 XT-6 익스팬스</h3><p>오프화이트/실버 컬러. 박스 없어도 괜찮고 밑창 상태가 좋은 제품.</p><div class="tags"><span class="tag">260–265</span><span class="tag">오프화이트</span><span class="tag">중고 가능</span></div><div class="seller-request-bottom"><div class="seller-budget"><small>희망 예산</small><strong>최대 ₩250,000</strong></div><button class="seller-respond" data-request="살로몬 XT-6 익스팬스">제안하기 ↗</button></div></div></article>
+        <article class="seller-request" data-category="가방" data-budget="340000" data-offers="1"><div class="seller-request-photo"><img loading="lazy" src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=500&q=78" alt="가방 참고 이미지"/><span>가방 · 빈티지</span></div><div class="seller-request-info"><span class="request-user">sohee.archive · 3시간 전</span><h3>미우미우 빈티지 숄더백</h3><p>브라운 계열, 작은 사이즈. 모서리 까짐이 심하지 않은 제품을 찾아요.</p><div class="tags"><span class="tag">브라운</span><span class="tag">정품 증빙</span><span class="tag">상태 B 이상</span></div><div class="seller-request-bottom"><div class="seller-budget"><small>희망 예산</small><strong>최대 ₩340,000</strong></div><button class="seller-respond" data-request="미우미우 빈티지 숄더백">제안하기 ↗</button></div></div></article>
+        <article class="seller-request" data-category="아우터" data-budget="190000" data-offers="0"><div class="seller-request-photo"><img loading="lazy" src="https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=500&q=78" alt="레더 재킷 참고 이미지"/><span>아우터 · 재킷</span></div><div class="seller-request-info"><span class="request-user">min.works · 5시간 전</span><h3>90s 블랙 레더 블루종</h3><p>너무 슬림하지 않은 핏. 어깨 실측 48cm 내외, 사용감 적은 제품.</p><div class="tags"><span class="tag">M–L</span><span class="tag">블랙</span><span class="tag">실측 48cm</span></div><div class="seller-request-bottom"><div class="seller-budget"><small>희망 예산</small><strong>최대 ₩190,000</strong></div><button class="seller-respond" data-request="90s 블랙 레더 블루종">제안하기 ↗</button></div></div></article>
+      </div>
+      </div>
+      <section class="seller-mode-panel" id="sellerStylingPanel" role="tabpanel">
+        <div class="styling-seller-intro">
+          <div><div class="section-kicker">STYLING REQUESTS</div><h2>체형과 상황을 확인하고, 내 상품으로 코디를 제안하세요.</h2><p>상품 하나가 아니라 판매 중인 상품 조합과 코디 이유를 함께 전달합니다.</p></div>
+          <span class="demo-pill">SELLER-CURATED</span>
+        </div>
+        <div class="seller-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>고객이 입력한 키·평소 사이즈·선호 핏을 참고해 보유 상품 중 맞는 조합을 골라주세요.</span></div>
+        <div class="styling-request-grid" id="sellerStylingGrid"></div>
+      </section>
+      <div class="seller-bottom"><div><h2>당신의 옷이 누군가의 찾던 옷이에요.</h2><p>매물을 등록하고 취향이 맞는 구매 요청을 만나보세요.</p></div><button class="btn" id="sellerUploadBottom">내 상품 등록하기 ↗</button></div>
+      <footer class="footer"><span>© 2026 FLIP MARKET</span><span>ABOUT · HELP · TERMS · PRIVACY</span><span>FIND WHAT YOU FEEL.</span></footer>
+    </section>
+
+    <section class="page" id="myPage">
+      <div class="mypage-intro">
+        <div class="eyebrow">MY ACCOUNT / 04</div>
+        <h1>내 옷 찾기의 모든 것.</h1>
+        <p>요청과 제안, 찜한 상품을 한곳에서 관리해요.</p>
+      </div>
+      <div class="mypage-profile">
+        <div class="mypage-identity">
+          <div class="mypage-avatar" id="mypageAvatar">M</div>
+          <div><small>FLIP MEMBER · DEMO</small><strong id="mypageGreeting">안녕하세요, FLIP 사용자님</strong><p id="mypageIntroText">시연용 계정 · 프로필 정보는 설정에서 수정할 수 있어요.</p></div>
+          <button class="mypage-profile-edit" data-mypage-tab="settings">프로필 수정</button>
+        </div>
+        <div class="mypage-metrics">
+          <div class="mypage-metric"><span>내 요청</span><strong id="myRequestCount">02</strong></div>
+          <div class="mypage-metric"><span>받은 제안</span><strong id="myOfferCount">03</strong></div>
+          <div class="mypage-metric"><span>찜한 상품</span><strong id="mySavedCount">0</strong></div>
+        </div>
+      </div>
+      <div class="mypage-layout">
+        <aside class="mypage-sidebar" aria-label="마이페이지 메뉴">
+          <button class="mypage-tab active" data-mypage-tab="overview">활동 요약 <span>↗</span></button>
+          <button class="mypage-tab" data-mypage-tab="requests">내 구매 요청</button>
+          <button class="mypage-tab" data-mypage-tab="offers">받은 제안</button>
+          <button class="mypage-tab" data-mypage-tab="saved">찜한 상품</button>
+          <button class="mypage-tab" data-mypage-tab="settings">계정 설정</button>
+          <div class="mypage-sidebar-note">요청을 등록하면 판매자 제안이 이곳에 모여요. 마음에 드는 상품은 찜 목록에서 다시 확인할 수 있어요.</div>
+        </aside>
+        <div class="mypage-content">
+          <section class="mypage-panel active" data-mypage-panel="overview">
+            <div class="mypage-panel-head"><div><h2>활동 요약</h2><p>최근 진행 중인 요청과 판매자 제안을 확인해보세요.</p></div><span class="mypage-status">DEMO DATA</span></div>
+            <div class="mypage-columns">
+              <div class="mypage-card">
+                <div class="mypage-card-title"><strong>최근 구매 요청</strong><button class="mypage-link" data-mypage-tab="requests">전체 보기 ↗</button></div>
+                <div class="mypage-list" data-my-requests></div>
+              </div>
+              <div class="mypage-card">
+                <div class="mypage-card-title"><strong>최근 받은 제안</strong><button class="mypage-link" data-mypage-tab="offers">제안 비교 ↗</button></div>
+                <div class="mypage-list">
+                  <div class="mypage-list-row"><div class="mypage-item-main"><small>빈티지 나이키 스웻셔츠 · Archive Room</small><strong>90s Center Swoosh Crewneck</strong><span>L · 상태 A · 실측 포함</span></div><span class="mypage-status strong">₩92,000</span></div>
+                  <div class="mypage-list-row"><div class="mypage-item-main"><small>아워레가시 써드컷 데님 · Second Form</small><strong>Third Cut Digital Denim</strong><span>W29 · 미수선 · 정품 인증</span></div><span class="mypage-status">₩174,000</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="mypage-quicklinks">
+              <button class="mypage-quicklink" data-page="customer">새로운 옷 찾기 요청하기 <span>↗</span></button>
+              <button class="mypage-quicklink" data-page="seller">판매자 요청 둘러보기 <span>↗</span></button>
+            </div>
+            <p class="mypage-demo-note">현재 계정·요청·제안 정보는 화면 시연을 위한 예시입니다.</p>
+          </section>
+
+          <section class="mypage-panel" data-mypage-panel="requests">
+            <div class="mypage-panel-head"><div><h2>내 구매 요청</h2><p>등록한 요청의 진행 상태를 확인해요.</p></div><button class="btn" data-page="customer">새 요청 작성 ↗</button></div>
+            <div class="mypage-card"><div class="mypage-list" data-my-requests></div></div>
+          </section>
+
+          <section class="mypage-panel" data-mypage-panel="offers">
+            <div class="mypage-panel-head"><div><h2>받은 제안</h2><p>같은 요청에 도착한 상품을 가격과 상태별로 비교해요.</p></div><span class="mypage-status" id="mypageOfferLabel">3개 제안</span></div>
+            <div class="mypage-offer-grid">
+              <article class="mypage-offer-card"><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=400&q=78" alt="회색 빈티지 스웻셔츠"><div class="mypage-offer-info"><small>요청 · 빈티지 나이키 스웻셔츠</small><strong>90s Center Swoosh Crewneck</strong><span>Archive Room · L · 상태 A</span><div class="mypage-offer-price">₩92,000</div><button type="button" data-offer-action>구매 의사 보내기</button></div></article>
+              <article class="mypage-offer-card"><img src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=400&q=78" alt="네이비 빈티지 스웻셔츠"><div class="mypage-offer-info"><small>요청 · 빈티지 나이키 스웻셔츠</small><strong>Vintage Logo Sweatshirt</strong><span>Old Street · XL · 상태 B+</span><div class="mypage-offer-price">₩78,000</div><button type="button" data-offer-action>구매 의사 보내기</button></div></article>
+              <article class="mypage-offer-card"><img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=78" alt="청바지"><div class="mypage-offer-info"><small>요청 · 아워레가시 써드컷 데님</small><strong>Third Cut Digital Denim</strong><span>Second Form · W29 · 미수선</span><div class="mypage-offer-price">₩174,000</div><button type="button" data-offer-action>구매 의사 보내기</button></div></article>
+            </div>
+            <p class="mypage-demo-note">제안 상품과 판매자 정보는 화면 시연을 위한 예시입니다.</p>
+          </section>
+
+          <section class="mypage-panel" data-mypage-panel="saved">
+            <div class="mypage-panel-head"><div><h2>찜한 상품</h2><p>관심 있는 상품을 모아두고 다시 살펴봐요.</p></div></div>
+            <div class="mypage-saved-grid" id="mypageSavedGrid"></div>
+          </section>
+
+          <section class="mypage-panel" data-mypage-panel="settings">
+            <div class="mypage-panel-head"><div><h2>계정 설정</h2><p>판매자와 소통할 때 표시할 정보를 관리해요.</p></div></div>
+            <div class="panel mypage-settings">
+              <form id="profileForm">
+                <div class="form-grid">
+                  <div class="field"><label for="profileName">닉네임</label><input id="profileName" value="FLIP 사용자" /></div>
+                  <div class="field"><label for="profileEmail">이메일</label><input id="profileEmail" type="email" placeholder="이메일 주소" /></div>
+                  <div class="field full"><label for="profileIntro">한 줄 소개</label><input id="profileIntro" placeholder="내 취향이나 스타일을 소개해보세요." /></div>
+                </div>
+                <div class="form-submit"><small>연락처와 주소는 공개되지 않아요.</small><button class="btn" type="submit">변경사항 저장</button></div>
+              </form>
+            </div>
+            <p class="mypage-demo-note">프로필 정보 저장은 현재 시연용입니다.</p>
+          </section>
+        </div>
+      </div>
+      <footer class="footer"><span>© 2026 FLIP MARKET</span><span>ABOUT · HELP · TERMS · PRIVACY</span><span>FIND WHAT YOU FEEL.</span></footer>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="offerModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal"><button class="modal-close" id="modalClose" aria-label="닫기">×</button><div class="section-kicker">SEND AN OFFER</div><h2 id="modalTitle">내 상품으로 제안하기</h2><p>실제 상품 정보와 사진을 함께 보내면 구매자가 더 잘 비교할 수 있어요.</p>
+      <div class="modal-request"><img id="modalThumb" src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=200&q=75" alt="요청 이미지"><div><b id="modalRequestName">빈티지 나이키 스웻셔츠</b><small>구매 요청에 대한 제안</small></div></div>
+      <form id="offerForm"><div class="form-grid"><div class="field"><label>제안 상품명 *</label><input required placeholder="브랜드와 상품명" /></div><div class="field"><label>판매 가격 *</label><input required type="number" min="0" placeholder="원" /></div><div class="field"><label>상품 상태 *</label><select required><option value="">선택</option><option>새 상품</option><option>미사용</option><option>중고 · A</option><option>중고 · B</option></select></div><div class="field"><label>사이즈 / 실측</label><input placeholder="예: L / 어깨 52cm" /></div><div class="field full"><label>상품 설명</label><textarea placeholder="사용감, 구성품, 정품 증빙 등"></textarea></div></div><div class="form-submit"><small>제안 등록 후 구매자가 비교할 수 있어요.</small><button class="btn" type="submit">제안 보내기 ↗</button></div></form>
+    </div>
+  </div>
+  <div class="modal-backdrop" id="stylingOfferModal" role="dialog" aria-modal="true" aria-labelledby="stylingOfferTitle">
+    <div class="modal styling-modal">
+      <button class="modal-close" id="stylingModalClose" aria-label="닫기">×</button>
+      <div class="section-kicker">BUILD A LOOK WITH YOUR ITEMS</div>
+      <h2 id="stylingOfferTitle">내 상품으로 코디 제안</h2>
+      <p>요청자의 체형과 상황에 맞는 보유 상품을 골라 코디를 완성해보세요.</p>
+      <div class="styling-request-summary" id="stylingRequestSummary"></div>
+      <form id="stylingOfferForm">
+        <div class="field"><label>코디에 포함할 내 상품 *</label></div>
+        <div class="styling-inventory-list">
+          <label class="styling-inventory-item"><input type="checkbox" name="styleProduct" value="Vintage Nike Crewneck · L" data-price="89000"><span class="inventory-check"></span><span class="inventory-copy"><strong>Vintage Nike Crewneck</strong><small>상의 · L · 상태 A</small></span><b>₩89,000</b></label>
+          <label class="styling-inventory-item"><input type="checkbox" name="styleProduct" value="Third Cut Digital Denim · W29" data-price="174000"><span class="inventory-check"></span><span class="inventory-copy"><strong>Third Cut Digital Denim</strong><small>하의 · W29 · 미수선</small></span><b>₩174,000</b></label>
+          <label class="styling-inventory-item"><input type="checkbox" name="styleProduct" value="90s Leather Blouson · M" data-price="145000"><span class="inventory-check"></span><span class="inventory-copy"><strong>90s Leather Blouson</strong><small>아우터 · M · 상태 A</small></span><b>₩145,000</b></label>
+          <label class="styling-inventory-item"><input type="checkbox" name="styleProduct" value="Samba OG Core Black · 260" data-price="112000"><span class="inventory-check"></span><span class="inventory-copy"><strong>Samba OG Core Black</strong><small>신발 · 260 · 새 상품</small></span><b>₩112,000</b></label>
+        </div>
+        <div class="styling-total"><span>코디 총액</span><strong id="stylingOfferTotal">₩0</strong></div>
+        <div class="field styling-offer-note"><label for="stylingOfferNote">코디 설명 *</label><textarea id="stylingOfferNote" required placeholder="체형과 요청한 상황에 이 조합이 잘 맞는 이유를 설명해주세요."></textarea></div>
+        <div class="form-submit"><small>상품 조합과 총액을 구매자에게 보여줘요.</small><button class="btn" type="submit">코디 제안 보내기 ↗</button></div>
+      </form>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const pages = { home: document.getElementById('homePage'), customer: document.getElementById('customerPage'), seller: document.getElementById('sellerPage'), mypage: document.getElementById('myPage') };
+    const navLinks = [...document.querySelectorAll('.nav-link')];
+    const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    function readStored(key, fallback) {
+      try { const value = localStorage.getItem(key); return value ? JSON.parse(value) : fallback; } catch { return fallback; }
+    }
+    function writeStored(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+    }
+    const demoRequests = [
+      { category:'상의', title:'빈티지 나이키 스웻셔츠', budget:'₩100,000 내외', offers:2, time:'오늘 등록' },
+      { category:'하의', title:'아워레가시 써드컷 데님', budget:'최대 ₩220,000', offers:1, time:'어제 등록' }
+    ];
+    let myRequestData = readStored('motif_my_requests', demoRequests);
+    if (!Array.isArray(myRequestData)) myRequestData = demoRequests;
+    const storedSavedKeys = readStored('motif_saved_products', []);
+    const savedKeys = new Set(Array.isArray(storedSavedKeys) ? storedSavedKeys : []);
+    const storedProfile = readStored('motif_profile', { name:'FLIP 사용자', email:'', intro:'' });
+    const profileData = storedProfile && typeof storedProfile === 'object' && !Array.isArray(storedProfile) ? storedProfile : { name:'FLIP 사용자', email:'', intro:'' };
+    if (profileData.name === 'MOTIF 사용자') profileData.name = 'FLIP 사용자';
+    let stylingRequests = readStored('flip_styling_requests', []);
+    if (!Array.isArray(stylingRequests)) stylingRequests = [];
+    let stylingOffers = readStored('flip_styling_offers', []);
+    if (!Array.isArray(stylingOffers)) stylingOffers = [];
+    let activeStylingRequestId = null;
+    document.querySelectorAll('#homePage .product-card').forEach(card => {
+      const brand = card.querySelector('.product-brand')?.textContent.trim() || '';
+      const name = card.querySelector('.product-name')?.textContent.trim() || '';
+      if (brand && name) card.dataset.favoriteKey = `${brand}::${name}`;
+    });
+    document.querySelectorAll('.heart[data-favorite-key]').forEach(button => {
+      const saved = savedKeys.has(button.dataset.favoriteKey);
+      button.classList.toggle('saved', saved); button.setAttribute('aria-pressed', String(saved));
+    });
+    function showPage(name) {
+      if (!pages[name]) return;
+      Object.entries(pages).forEach(([key, el]) => el.classList.toggle('active', key === name));
+      navLinks.forEach(el => el.classList.toggle('active', el.dataset.page === name));
+      window.scrollTo({top:0, behavior:'smooth'});
+      history.replaceState(null, '', '#' + name);
+    }
+    function toast(message) {
+      const el = document.getElementById('toast'); el.textContent = message; el.classList.add('show');
+      clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => el.classList.remove('show'), 2700);
+    }
+    function setCustomerMode(mode) {
+      document.querySelectorAll('[data-customer-mode]').forEach(tab => {
+        const active = tab.dataset.customerMode === mode;
+        tab.classList.toggle('active', active); tab.setAttribute('aria-selected', String(active));
+      });
+      document.getElementById('regularModePanel').classList.toggle('active', mode === 'purchase');
+      document.getElementById('stylingModePanel').classList.toggle('active', mode === 'styling');
+    }
+    function setSellerMode(mode) {
+      document.querySelectorAll('[data-seller-mode]').forEach(tab => {
+        const active = tab.dataset.sellerMode === mode;
+        tab.classList.toggle('active', active); tab.setAttribute('aria-selected', String(active));
+      });
+      document.getElementById('sellerPurchasePanel').classList.toggle('active', mode === 'purchase');
+      document.getElementById('sellerStylingPanel').classList.toggle('active', mode === 'styling');
+    }
+    function renderSellerStylingRequests() {
+      const grid = document.getElementById('sellerStylingGrid');
+      const badge = document.getElementById('stylingRequestBadge');
+      badge.textContent = stylingRequests.length;
+      if (!stylingRequests.length) {
+        grid.innerHTML = '<div class="empty-state">아직 등록된 코디 요청이 없어요. 구매자가 체형과 원하는 스타일을 등록하면 여기에 표시돼요.</div>';
+        return;
+      }
+      grid.innerHTML = stylingRequests.map(request => {
+        const profile = request.profile || {};
+        const tags = [...(request.items || []), ...(request.keywords || [])];
+        const description = [request.note, tags.length ? `원하는 품목·스타일: ${tags.join(' · ')}` : ''].filter(Boolean).join('\n');
+        return `<article class="styling-request-card">
+          <div class="styling-request-card-head"><div><div class="section-kicker">${escapeHTML(request.occasion || '스타일링')} · 코디 요청</div><h3>${escapeHTML(request.title || '나에게 맞는 코디를 찾아요')}</h3></div><span class="request-time">${escapeHTML(request.time || '방금 등록')}</span></div>
+          <div class="styling-request-meta"><span>키 ${escapeHTML(profile.height || '-')}cm</span><span>상의 ${escapeHTML(profile.topSize || '-')}</span><span>하의 ${escapeHTML(profile.bottomSize || '-')}</span><span>${escapeHTML(profile.fit || '핏 미정')}</span><span>예산 최대 ₩${Number(request.budget || 0).toLocaleString('ko-KR')}</span></div>
+          <p class="styling-request-copy">${escapeHTML(description || '체형과 요청한 상황에 맞춰 코디를 제안해주세요.')}</p>
+          <div class="styling-request-card-foot"><strong>판매자 코디 ${Number(request.offers || 0)}개 도착</strong><button type="button" class="styling-respond" data-style-respond="${escapeHTML(request.id)}">내 상품으로 코디 제안 ↗</button></div>
+        </article>`;
+      }).join('');
+    }
+    function renderBuyerStylingOffers() {
+      const grid = document.getElementById('buyerStylingOffers');
+      const mine = stylingOffers.filter(offer => offer.ownerId === 'demo-user');
+      if (!mine.length) {
+        grid.innerHTML = '<div class="empty-state">아직 받은 코디가 없어요. 요청을 등록하면 판매자가 보유 상품으로 조합한 코디를 보내드려요.</div>';
+        return;
+      }
+      grid.innerHTML = mine.map(offer => `<article class="styling-offer-card">
+        <div class="styling-offer-visual" aria-hidden="true"><svg viewBox="0 0 80 100" fill="none"><circle cx="40" cy="13" r="8" stroke="currentColor" stroke-width="2"/><path d="M28 27c-7 2-10 7-11 14l-3 18c0 4 2 6 5 6s5-2 5-5l3-12v17l-2 23c0 4 2 7 6 7 4 0 6-3 6-7l2-17 2 17c0 4 2 7 6 7 4 0 6-3 6-7l-2-23V48l3 12c0 3 2 5 5 5s5-2 5-6l-3-18c-1-7-4-12-11-14-7-2-16-2-22 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+        <div class="styling-offer-info"><small>${escapeHTML(offer.seller || 'FLIP 셀러')} · ${escapeHTML(offer.occasion || '맞춤 코디')}</small><h3>${escapeHTML(offer.title || '당신을 위한 코디')}</h3><p>${escapeHTML(offer.note || '')}</p><div class="styling-product-list">${(offer.products || []).map(product => `<span>${escapeHTML(product.name)}</span>`).join('')}</div><div class="styling-offer-total"><span>${(offer.products || []).length}개 상품 구성</span><strong>₩${Number(offer.total || 0).toLocaleString('ko-KR')}</strong></div></div>
+      </article>`).join('');
+    }
+    function openStylingOffer(requestId) {
+      const request = stylingRequests.find(item => String(item.id) === String(requestId));
+      if (!request) return;
+      activeStylingRequestId = String(request.id);
+      const profile = request.profile || {};
+      document.getElementById('stylingRequestSummary').innerHTML = `<strong>${escapeHTML(request.title || '코디 요청')}</strong><span>${escapeHTML(request.occasion || '')}</span><span>키 ${escapeHTML(profile.height || '-')}cm</span><span>상의 ${escapeHTML(profile.topSize || '-')}</span><span>하의 ${escapeHTML(profile.bottomSize || '-')}</span><span>${escapeHTML(profile.fit || '핏 미정')}</span><span>예산 ₩${Number(request.budget || 0).toLocaleString('ko-KR')}</span>`;
+      const form = document.getElementById('stylingOfferForm');
+      form.reset(); updateStylingOfferTotal();
+      document.getElementById('stylingOfferModal').classList.add('open'); document.body.style.overflow='hidden';
+    }
+    function closeStylingOffer() {
+      document.getElementById('stylingOfferModal').classList.remove('open'); document.body.style.overflow=''; activeStylingRequestId = null;
+    }
+    function updateStylingOfferTotal() {
+      const total = [...document.querySelectorAll('#stylingOfferForm [name="styleProduct"]:checked')].reduce((sum, input) => sum + Number(input.dataset.price || 0), 0);
+      document.getElementById('stylingOfferTotal').textContent = `₩${total.toLocaleString('ko-KR')}`;
+      return total;
+    }
+    function renderMyRequests() {
+      const totalOffers = myRequestData.reduce((sum, item) => sum + (Number(item.offers) || 0), 0);
+      document.getElementById('myRequestCount').textContent = myRequestData.length;
+      document.getElementById('myOfferCount').textContent = totalOffers;
+      document.getElementById('mypageOfferLabel').textContent = `${totalOffers}개 제안`;
+      document.querySelectorAll('[data-my-requests]').forEach(list => {
+        const items = list.closest('[data-mypage-panel="overview"]') ? myRequestData.slice(0, 2) : myRequestData;
+        list.innerHTML = items.length ? items.map(item => `
+          <div class="mypage-list-row">
+            <div class="mypage-item-main"><small>${escapeHTML(item.category)} · ${escapeHTML(item.time || '등록됨')}</small><strong>${escapeHTML(item.title)}</strong><span>${escapeHTML(item.budget)} · ${Number(item.offers) ? '받은 제안을 확인해보세요' : '판매자 제안을 기다리는 중'}</span></div>
+            <span class="mypage-status ${Number(item.offers) ? 'strong' : ''}">${Number(item.offers) ? `제안 ${Number(item.offers)}개` : '제안 대기'}</span>
+          </div>`).join('') : '<div class="mypage-empty"><strong>아직 등록한 요청이 없어요.</strong><p>찾고 있는 옷을 먼저 요청해보세요.</p><button type="button" class="btn" data-page="customer">첫 요청 작성하기 ↗</button></div>';
+      });
+    }
+    function renderMySavedItems() {
+      const products = new Map();
+      document.querySelectorAll('#homePage .product-card[data-favorite-key]').forEach(card => {
+        const key = card.dataset.favoriteKey;
+        if (!savedKeys.has(key) || products.has(key)) return;
+        products.set(key, {
+          key,
+          brand:card.querySelector('.product-brand')?.textContent.trim() || '',
+          name:card.querySelector('.product-name')?.textContent.trim() || '',
+          price:card.querySelector('.product-price')?.childNodes[0]?.textContent.trim() || '',
+          image:card.querySelector('.product-image img')?.getAttribute('src') || '',
+          alt:card.querySelector('.product-image img')?.getAttribute('alt') || '찜한 의류 상품'
+        });
+      });
+      document.getElementById('savedCount').textContent = products.size;
+      document.getElementById('mySavedCount').textContent = products.size;
+      const grid = document.getElementById('mypageSavedGrid');
+      grid.innerHTML = products.size ? [...products.values()].map(item => `
+        <article class="mypage-saved-item">
+          <img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.alt)}" loading="lazy">
+          <button type="button" class="mypage-saved-remove" data-favorite-remove="${escapeHTML(item.key)}" aria-label="${escapeHTML(item.name)} 찜 취소">×</button>
+          <div class="mypage-saved-brand">${escapeHTML(item.brand)}</div>
+          <div class="mypage-saved-name">${escapeHTML(item.name)}</div>
+          <div class="mypage-saved-price">${escapeHTML(item.price)}</div>
+        </article>`).join('') : '<div class="mypage-empty" style="grid-column:1/-1"><strong>아직 찜한 상품이 없어요.</strong><p>마음에 드는 상품의 하트를 눌러 모아보세요.</p><button type="button" class="btn" data-page="home">상품 둘러보기 ↗</button></div>';
+    }
+    function renderMyProfile() {
+      const name = (profileData.name || '').trim() || 'FLIP 사용자';
+      document.getElementById('mypageGreeting').textContent = `안녕하세요, ${name}님`;
+      document.getElementById('mypageIntroText').textContent = profileData.intro || '시연용 계정 · 프로필 정보는 설정에서 수정할 수 있어요.';
+      document.getElementById('mypageAvatar').textContent = [...name][0] || 'M';
+      document.getElementById('profileName').value = name;
+      document.getElementById('profileEmail').value = profileData.email || '';
+      document.getElementById('profileIntro').value = profileData.intro || '';
+    }
+    function renderMyPage() { renderMyRequests(); renderMySavedItems(); renderMyProfile(); }
+    function showMyPageTab(name) {
+      document.querySelectorAll('.mypage-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.mypageTab === name));
+      document.querySelectorAll('.mypage-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.mypagePanel === name));
+      if (name === 'saved') renderMySavedItems();
+    }
+    document.addEventListener('click', event => {
+      const pageButton = event.target.closest('[data-page]');
+      if (pageButton) { event.preventDefault(); showPage(pageButton.dataset.page); }
+      const customerModeButton = event.target.closest('[data-customer-mode]');
+      if (customerModeButton) setCustomerMode(customerModeButton.dataset.customerMode);
+      const sellerModeButton = event.target.closest('[data-seller-mode]');
+      if (sellerModeButton) setSellerMode(sellerModeButton.dataset.sellerMode);
+      const stylingResponseButton = event.target.closest('[data-style-respond]');
+      if (stylingResponseButton) openStylingOffer(stylingResponseButton.dataset.styleRespond);
+      const tabButton = event.target.closest('[data-mypage-tab]');
+      if (tabButton) showMyPageTab(tabButton.dataset.mypageTab);
+      const removeButton = event.target.closest('[data-favorite-remove]');
+      if (removeButton) {
+        const key = removeButton.dataset.favoriteRemove;
+        savedKeys.delete(key);
+        document.querySelectorAll('.heart[data-favorite-key]').forEach(button => {
+          if (button.dataset.favoriteKey === key) { button.classList.remove('saved'); button.setAttribute('aria-pressed', 'false'); }
+        });
+        writeStored('motif_saved_products', [...savedKeys]); renderMySavedItems(); toast('찜 목록에서 삭제했어요.');
+      }
+      const offerButton = event.target.closest('[data-offer-action]');
+      if (offerButton && !offerButton.disabled) {
+        offerButton.textContent = '구매 의사 전달 완료'; offerButton.disabled = true;
+        toast('구매 의사를 보냈어요. 판매자와 상세 조건을 확인해보세요.');
+      }
+    });
+    document.querySelectorAll('.heart').forEach(btn => btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const key = btn.dataset.favoriteKey;
+      if (!key) return;
+      const save = !savedKeys.has(key);
+      if (save) savedKeys.add(key); else savedKeys.delete(key);
+      document.querySelectorAll('.heart[data-favorite-key]').forEach(button => {
+        if (button.dataset.favoriteKey === key) { button.classList.toggle('saved', save); button.setAttribute('aria-pressed', String(save)); }
+      });
+      writeStored('motif_saved_products', [...savedKeys]); renderMySavedItems();
+      toast(save ? '찜 목록에 저장했어요.' : '찜 목록에서 삭제했어요.');
+    }));
+    document.getElementById('headerHeart').addEventListener('click', () => { showPage('mypage'); showMyPageTab('saved'); });
+    document.getElementById('profileButton').addEventListener('click', () => { showPage('mypage'); showMyPageTab('overview'); });
+    document.getElementById('profileForm').addEventListener('submit', event => {
+      event.preventDefault();
+      profileData.name = document.getElementById('profileName').value.trim();
+      profileData.email = document.getElementById('profileEmail').value.trim();
+      profileData.intro = document.getElementById('profileIntro').value.trim();
+      writeStored('motif_profile', profileData); renderMyProfile(); toast('프로필 정보를 저장했어요.');
+    });
+    const searchInput = document.getElementById('globalSearch');
+    const suggestionBox = document.getElementById('searchSuggestions');
+    let activeSuggestion = -1;
+    const normalizeSearch = value => String(value).toLocaleLowerCase().replace(/[\s\-_—]/g, '');
+    function closeSearchSuggestions() {
+      suggestionBox.classList.remove('open'); searchInput.setAttribute('aria-expanded', 'false'); activeSuggestion = -1;
+    }
+    function performSearch(rawValue) {
+      const value = String(rawValue || '').trim();
+      const query = normalizeSearch(value);
+      if (!query) { toast('검색어를 입력해주세요.'); closeSearchSuggestions(); return; }
+      searchInput.value = value; closeSearchSuggestions(); showPage('home'); applyHomeCategory('전체');
+      const home = document.getElementById('homePage');
+      home.classList.add('search-active');
+      let productMatches = 0, requestMatches = 0;
+      document.querySelectorAll('#homePage .product-card[data-search]').forEach(card => {
+        const isRecent = Boolean(card.closest('#recentProducts'));
+        const text = [card.dataset.search, card.querySelector('.product-brand')?.textContent, card.querySelector('.product-name')?.textContent].join(' ');
+        const matches = isRecent && normalizeSearch(text).includes(query);
+        card.style.display = matches ? 'block' : 'none';
+        if (matches) productMatches++;
+      });
+      document.querySelectorAll('#homePage .request-card').forEach(card => {
+        const text = [card.dataset.category, card.querySelector('h3')?.textContent, card.querySelector('p')?.textContent, card.textContent].join(' ');
+        const matches = normalizeSearch(text).includes(query);
+        card.style.display = matches ? 'block' : 'none';
+        if (matches) requestMatches++;
+      });
+      const resultCount = productMatches + requestMatches;
+      document.querySelectorAll('#homePage .section').forEach(section => {
+        const cards = [...section.querySelectorAll('.product-card[data-search], .request-card')];
+        if (cards.length) {
+          const showEmptyResults = Boolean(section.querySelector('#recentProducts')) && resultCount === 0;
+          section.style.display = cards.some(card => card.style.display !== 'none') || showEmptyResults ? '' : 'none';
+        }
+      });
+      const empty = document.getElementById('searchEmpty');
+      empty.textContent = '“' + value + '” 검색 결과가 없어요. 원하는 옷을 요청으로 남겨보세요.';
+      empty.style.display = resultCount ? 'none' : 'block';
+      const target = productMatches ? document.getElementById('recentProducts') : requestMatches ? document.querySelector('#homePage .request-grid') : empty;
+      (target || empty).scrollIntoView({behavior:'smooth', block:'center'});
+      if (!resultCount) toast('검색 결과가 없어요. 다른 단어로 찾아보세요.');
+    }
+    function renderSearchSuggestions(rawValue) {
+      const value = rawValue.trim();
+      const query = normalizeSearch(value);
+      if (!query) { closeSearchSuggestions(); suggestionBox.innerHTML = ''; return; }
+      const entries = [];
+      const seen = new Set();
+      const add = entry => {
+        const key = normalizeSearch(entry.value);
+        if (!key || seen.has(key)) return;
+        seen.add(key); entries.push(entry);
+      };
+      document.querySelectorAll('#recentProducts .product-card').forEach(card => {
+        const brand = card.querySelector('.product-brand')?.textContent.trim() || '';
+        const name = card.querySelector('.product-name')?.textContent.trim() || '';
+        const haystack = normalizeSearch([brand, name, card.dataset.search].join(' '));
+        if (haystack.includes(query)) add({value:name, title:name, detail:brand, kind:'상품', priority:normalizeSearch(name).startsWith(query) ? 0 : 1});
+      });
+      document.querySelectorAll('#homePage .request-card').forEach(card => {
+        const title = card.querySelector('h3')?.textContent.trim() || '';
+        const detail = card.querySelector('p')?.textContent.trim() || '';
+        const haystack = normalizeSearch([title, detail, card.dataset.category, card.textContent].join(' '));
+        if (haystack.includes(query)) add({value:title, title, detail:card.dataset.category || '구매 요청', kind:'요청', priority:normalizeSearch(title).startsWith(query) ? 0 : 2});
+      });
+      const relatedKeywords = ['빈티지','나이키','아워레가시','니트','스웻셔츠','데님','청바지','스니커즈','가디건','레더 재킷','숄더백','상의','하의','아우터','신발','가방'];
+      relatedKeywords.forEach(keyword => {
+        if (normalizeSearch(keyword).includes(query) && normalizeSearch(keyword) !== query) {
+          add({value:keyword, title:keyword, detail:'관련 검색어', kind:'키워드', priority:1});
+        }
+      });
+      entries.sort((a,b) => a.priority - b.priority);
+      const visible = entries.slice(0, 6);
+      if (!visible.length) visible.push({value:value, title:'“' + value + '” 검색', detail:'입력한 검색어로 찾아보기', kind:'검색', priority:3});
+      const rows = visible.map((entry,index) =>
+        '<button type="button" class="suggestion-row" role="option" aria-selected="false" data-search-suggestion="' + escapeHTML(entry.value) + '" data-suggestion-index="' + index + '">' +
+        '<span class="suggestion-icon">' + (entry.kind === '상품' ? '◇' : entry.kind === '요청' ? '＋' : '⌕') + '</span>' +
+        '<span class="suggestion-copy"><strong>' + escapeHTML(entry.title) + '</strong><small>' + escapeHTML(entry.detail) + '</small></span>' +
+        '<span class="suggestion-kind">' + escapeHTML(entry.kind) + '</span></button>'
+      ).join('');
+      suggestionBox.innerHTML = '<div class="suggestion-heading">RELATED SEARCHES</div>' + rows;
+      suggestionBox.classList.add('open'); searchInput.setAttribute('aria-expanded', 'true'); activeSuggestion = -1;
+    }
+    document.getElementById('searchForm').addEventListener('submit', event => {
+      event.preventDefault(); performSearch(searchInput.value);
+    });
+    searchInput.addEventListener('input', () => renderSearchSuggestions(searchInput.value));
+    searchInput.addEventListener('keydown', event => {
+      const options = [...suggestionBox.querySelectorAll('[data-search-suggestion]')];
+      if (event.key === 'Escape') { closeSearchSuggestions(); return; }
+      if (!options.length || !suggestionBox.classList.contains('open')) return;
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        activeSuggestion = activeSuggestion < 0
+          ? (event.key === 'ArrowDown' ? 0 : options.length - 1)
+          : (activeSuggestion + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+        options.forEach((option,index) => option.setAttribute('aria-selected', String(index === activeSuggestion)));
+        options[activeSuggestion].scrollIntoView({block:'nearest'});
+      } else if (event.key === 'Enter' && activeSuggestion >= 0) {
+        event.preventDefault(); performSearch(options[activeSuggestion].dataset.searchSuggestion);
+      }
+    });
+    searchInput.addEventListener('blur', () => setTimeout(closeSearchSuggestions, 120));
+    suggestionBox.addEventListener('mousedown', event => event.preventDefault());
+    suggestionBox.addEventListener('click', event => {
+      const option = event.target.closest('[data-search-suggestion]');
+      if (option) performSearch(option.dataset.searchSuggestion);
+    });
+    const homeCategoryTerms = {
+      '상의':['상의','니트','맨투맨','스웻셔츠','셔츠','티셔츠','가디건'],
+      '하의':['하의','팬츠','청바지','데님'],
+      '아우터':['아우터','재킷','블루종','코트','패딩'],
+      '신발':['신발','스니커즈','운동화','부츠','로퍼'],
+      '가방':['가방','숄더백','토트백','백팩']
+    };
+    function applyHomeCategory(category) {
+      document.getElementById('homePage').classList.remove('search-active');
+      document.querySelectorAll('.home-category-item').forEach(button => button.classList.toggle('active', button.dataset.homeCategory === category));
+      document.querySelectorAll('#homePage .product-card[data-search]').forEach(card => {
+        const query = card.dataset.search.toLowerCase();
+        const visible = category === '전체' || (homeCategoryTerms[category] || []).some(term => query.includes(term));
+        card.style.display = visible ? '' : 'none';
+      });
+      document.querySelectorAll('#homePage .request-card').forEach(card => {
+        card.style.display = category === '전체' || card.dataset.category === category ? '' : 'none';
+      });
+      document.querySelectorAll('#homePage .section').forEach(section => {
+        const cards = [...section.querySelectorAll('.product-card[data-search], .request-card')];
+        if (cards.length) section.style.display = cards.some(card => card.style.display !== 'none') ? '' : 'none';
+      });
+      document.getElementById('searchEmpty').style.display = 'none';
+    }
+    document.querySelectorAll('.home-category-item').forEach(button => button.addEventListener('click', () => applyHomeCategory(button.dataset.homeCategory)));
+    document.querySelectorAll('.customer-category-chip').forEach(button => button.addEventListener('click', () => {
+      const category = button.dataset.requestCategory;
+      document.getElementById('reqCategory').value = category;
+      document.querySelectorAll('.customer-category-chip').forEach(chip => chip.classList.toggle('active', chip === button));
+    }));
+    document.getElementById('reqCategory').addEventListener('change', event => {
+      document.querySelectorAll('.customer-category-chip').forEach(chip => chip.classList.toggle('active', chip.dataset.requestCategory === event.target.value));
+    });
+    document.querySelectorAll('.check-chip').forEach(btn => btn.addEventListener('click', () => btn.classList.toggle('selected')));
+    const upload = document.getElementById('referenceImage');
+    upload.addEventListener('change', () => { if (upload.files.length) { document.getElementById('uploadTitle').textContent = upload.files.length + '장의 이미지를 선택했어요'; document.getElementById('uploadHelp').textContent = [...upload.files].map(x => x.name).join(', '); } });
+    document.getElementById('requestForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const title = document.getElementById('reqTitle').value.trim();
+      const category = document.getElementById('reqCategory').value;
+      const budget = Number(document.getElementById('reqBudget').value).toLocaleString('ko-KR');
+      const brand = document.getElementById('reqBrand').value.trim();
+      const size = document.getElementById('reqSize').value.trim();
+      const desc = document.getElementById('reqDesc').value.trim();
+      myRequestData.unshift({ category, title, budget:`최대 ₩${budget}`, offers:0, time:'방금 등록' });
+      writeStored('motif_my_requests', myRequestData); renderMyRequests();
+      const card = document.createElement('article');
+      card.className = 'seller-request'; card.dataset.category = category; card.dataset.budget = budget.replaceAll(',', ''); card.dataset.offers = '0';
+      const reference = upload.files[0] ? URL.createObjectURL(upload.files[0]) : 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=500&q=78';
+      card.innerHTML = `<div class="seller-request-photo"><img src="${reference}" alt="요청 참고 이미지"/><span>${escapeHTML(category)} · 새 요청</span></div><div class="seller-request-info"><span class="request-user">you · 방금 전</span><h3></h3><p></p><div class="tags"><span class="tag">${escapeHTML(brand || '브랜드 미지정')}</span><span class="tag">${escapeHTML(size || '사이즈 협의')}</span></div><div class="seller-request-bottom"><div class="seller-budget"><small>희망 예산</small><strong>최대 ₩${budget}</strong></div><button class="seller-respond" data-request=""></button></div></div>`;
+      card.querySelector('h3').textContent = title;
+      card.querySelector('.seller-request-info p').textContent = desc || '구매자가 찾는 상품입니다. 조건에 맞는 상품을 제안해보세요.';
+      card.querySelector('.seller-respond').textContent = '제안하기 ↗';
+      card.querySelector('.seller-respond').dataset.request = title;
+      document.getElementById('sellerGrid').prepend(card);
+      card.querySelector('.seller-respond').addEventListener('click', () => openOffer(title));
+      toast('요청을 등록했어요. 판매자 제안을 기다려보세요.');
+      e.target.reset(); document.querySelectorAll('#conditionChecks .check-chip').forEach((c,i)=>c.classList.toggle('selected',i<2)); document.getElementById('uploadTitle').textContent='참고 이미지 추가하기'; document.getElementById('uploadHelp').textContent='찾는 옷의 사진이나 비슷한 스타일 이미지를 올려주세요 · 최대 5장';
+      setTimeout(() => { showPage('seller'); applyFilter('전체'); toast('방금 등록한 요청을 판매자 요청 목록에 추가했어요.'); }, 1100);
+    });
+    document.getElementById('stylingRequestForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const occasion = document.getElementById('stylingOccasion').value;
+      const budget = Number(document.getElementById('stylingBudget').value);
+      const request = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+        ownerId: 'demo-user',
+        title: `${occasion} 코디 요청`,
+        occasion,
+        budget,
+        profile: {
+          height: document.getElementById('bodyHeight').value,
+          topSize: document.getElementById('bodyTopSize').value,
+          bottomSize: document.getElementById('bodyBottomSize').value,
+          fit: document.getElementById('bodyFit').value
+        },
+        items: [...document.querySelectorAll('[data-styling-item].selected')].map(button => button.dataset.stylingItem),
+        keywords: [...document.querySelectorAll('[data-style-keyword].selected')].map(button => button.dataset.styleKeyword),
+        note: document.getElementById('stylingNote').value.trim(),
+        offers: 0,
+        time: '방금 등록'
+      };
+      stylingRequests.unshift(request);
+      writeStored('flip_styling_requests', stylingRequests);
+      myRequestData.unshift({ category:'코디', title:request.title, budget:`최대 ₩${budget.toLocaleString('ko-KR')}`, offers:0, time:'방금 등록' });
+      writeStored('motif_my_requests', myRequestData);
+      renderSellerStylingRequests(); renderBuyerStylingOffers(); renderMyRequests();
+      event.target.reset();
+      document.querySelectorAll('.styling-item-checks .check-chip').forEach((chip,index) => chip.classList.toggle('selected', index < 2));
+      document.querySelectorAll('.styling-keyword-checks .check-chip').forEach(chip => chip.classList.remove('selected'));
+      toast('코디 요청을 등록했어요. 판매자가 보유 상품으로 코디를 제안할 수 있어요.');
+    });
+    const modal = document.getElementById('offerModal');
+    function openOffer(name) { document.getElementById('modalRequestName').textContent=name; modal.classList.add('open'); document.body.style.overflow='hidden'; }
+    function closeOffer() { modal.classList.remove('open'); document.body.style.overflow=''; }
+    document.querySelectorAll('.seller-respond').forEach(btn=>btn.addEventListener('click',()=>openOffer(btn.dataset.request)));
+    document.getElementById('modalClose').addEventListener('click',closeOffer);
+    modal.addEventListener('click',e=>{if(e.target===modal) closeOffer();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeOffer();closeStylingOffer();}});
+    document.getElementById('offerForm').addEventListener('submit',e=>{e.preventDefault();closeOffer();e.target.reset();toast('제안을 보냈어요. 구매자가 비교할 수 있어요.');});
+    const stylingModal = document.getElementById('stylingOfferModal');
+    document.getElementById('stylingModalClose').addEventListener('click', closeStylingOffer);
+    stylingModal.addEventListener('click', event => { if (event.target === stylingModal) closeStylingOffer(); });
+    document.querySelectorAll('#stylingOfferForm [name="styleProduct"]').forEach(input => input.addEventListener('change', updateStylingOfferTotal));
+    document.getElementById('stylingOfferForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const request = stylingRequests.find(item => String(item.id) === String(activeStylingRequestId));
+      if (!request) { closeStylingOffer(); return; }
+      const selected = [...document.querySelectorAll('#stylingOfferForm [name="styleProduct"]:checked')];
+      if (!selected.length) { toast('코디에 포함할 상품을 하나 이상 골라주세요.'); return; }
+      const products = selected.map(input => ({ name:input.value, price:Number(input.dataset.price || 0) }));
+      const total = products.reduce((sum, product) => sum + product.price, 0);
+      const offer = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+        requestId: request.id,
+        ownerId: request.ownerId,
+        occasion: request.occasion,
+        title: `${request.occasion}에 어울리는 ${request.profile?.fit || '데일리'} 코디`,
+        seller: 'Archive Room',
+        products,
+        total,
+        note: document.getElementById('stylingOfferNote').value.trim()
+      };
+      stylingOffers.unshift(offer);
+      request.offers = Number(request.offers || 0) + 1;
+      writeStored('flip_styling_offers', stylingOffers);
+      writeStored('flip_styling_requests', stylingRequests);
+      renderSellerStylingRequests(); renderBuyerStylingOffers();
+      closeStylingOffer(); event.target.reset(); updateStylingOfferTotal();
+      toast('코디 제안을 보냈어요. 구매자 화면에서 제안을 확인할 수 있어요.');
+    });
+    document.getElementById('sellerUpload').addEventListener('click',()=>toast('상품 등록 기능은 다음 단계에서 연결할 수 있어요.'));
+    document.getElementById('sellerUploadBottom').addEventListener('click',()=>toast('상품 등록 기능은 다음 단계에서 연결할 수 있어요.'));
+    function applyFilter(value) {
+      document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.dataset.filter===value));
+      let count=0; document.querySelectorAll('.seller-request').forEach(card=>{const show=value==='전체'||card.dataset.category===value;card.style.display=show?'':'none';if(show)count++;});
+      let empty=document.querySelector('.seller-grid .empty-state');
+      if(!count&&!empty){empty=document.createElement('div');empty.className='empty-state';empty.textContent='이 카테고리의 요청이 아직 없어요.';document.getElementById('sellerGrid').appendChild(empty);}
+      if(count&&empty) empty.remove();
+    }
+    document.querySelectorAll('.filter-chip').forEach(btn=>btn.addEventListener('click',()=>applyFilter(btn.dataset.filter)));
+    document.getElementById('sortSelect').addEventListener('change',e=>{
+      const grid=document.getElementById('sellerGrid'), cards=[...grid.querySelectorAll('.seller-request')];
+      if(e.target.selectedIndex===1) cards.sort((a,b)=>Number(b.dataset.budget)-Number(a.dataset.budget));
+      else if(e.target.selectedIndex===2) cards.sort((a,b)=>Number(a.dataset.offers)-Number(b.dataset.offers));
+      else cards.sort((a,b)=>cards.indexOf(a)-cards.indexOf(b));
+      cards.forEach(c=>grid.appendChild(c));
+    });
+    renderSellerStylingRequests(); renderBuyerStylingOffers();
+    renderMyPage();
+    if(location.hash==='#customer') showPage('customer'); else if(location.hash==='#seller') showPage('seller'); else if(location.hash==='#mypage') showPage('mypage');
+  </script>
+</body>
+</html>
